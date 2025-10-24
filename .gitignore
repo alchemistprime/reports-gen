@@ -1,0 +1,25 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+*.json
+*.md
+*.pdf
+*.docx
+*.doc
+*.txt
+*.csv
+*.xls
+*.xlsx
+*.ppt
+*.pptx
+
+# Google OAuth credentials
+credentials.json
