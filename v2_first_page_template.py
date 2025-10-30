@@ -10,23 +10,25 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.colors import HexColor
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import Table, TableStyle, SimpleDocTemplate, Paragraph, Spacer, Image, PageTemplate, Frame, FrameBreak
-from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
+from reportlab.platypus import Table, TableStyle, SimpleDocTemplate, Paragraph, Spacer, Image, PageTemplate, Frame, FrameBreak, PageBreak, NextPageTemplate
+from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT, TA_JUSTIFY
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from pathlib import Path
+import markdown
 
 
 def create_v2_first_page_template(
     issue_number="XX", 
     date="00.00.202X", 
-    page_number="1",
     theme="INVENTORY GLUT",
     ticker="AZEK:US",
     timeframe="6-9 MONTHS",
     current_target="$49.90 | $30.00",
     downside="39.9%",
     company_data=None,
-    trade_data=None
+    trade_data=None,
+    markdown_file="AZEK.md",
+    output_file="templates/v2_first_page_template.pdf"
 ):
     """Create V2 First Page Template using Platypus for body content
     
@@ -96,17 +98,16 @@ def create_v2_first_page_template(
     margin_bottom = 0.25 * inch
     
     # Create output path
-    output_path = "templates/v2_first_page_template.pdf"
-    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    Path(output_file).parent.mkdir(parents=True, exist_ok=True)
     
     # Create SimpleDocTemplate for Platypus
-    doc = SimpleDocTemplate(output_path, pagesize=letter)
+    doc = SimpleDocTemplate(output_file, pagesize=letter)
     
     # Create story (will be populated later)
     story = []
     
-    # Prepare issue text
-    issue_text = f"ISSUE #{issue_number} | {date} | PAGE {page_number}"
+    # Prepare issue text (page number will be added dynamically in callback)
+    issue_text_template = f"ISSUE #{issue_number} | {date} | PAGE "
     logo_width = 1.90 * inch
     logo_height = 0.70 * inch
     
@@ -132,6 +133,9 @@ def create_v2_first_page_template(
             canvas.rect(logo_x, logo_y, logo_width, logo_height, fill=1, stroke=0)
         
         # Top-right: Issue info with grey background box
+        # Build issue text with dynamic page number
+        issue_text = issue_text_template + str(doc.page)
+        
         # Calculate text dimensions
         canvas.setFont(bold_font_name, 10)
         canvas.setFillColor(colors.black)
@@ -306,12 +310,48 @@ def create_v2_first_page_template(
         bottomPadding=0
     )
     
+    # Create continuation frames for two-column layout (pages 2+)
+    # Calculate available width between margins
+    available_width = page_width - margin_left - margin_right
+    col_width = available_width * 0.5  # Each column is half the available width
+    
+    left_col_frame = Frame(
+        margin_left,
+        margin_bottom + 0.5 * inch,
+        col_width,  # Half of available width
+        page_height - 1.5 * inch - 0.5 * inch,
+        leftPadding=0.1 * inch,
+        rightPadding=0.05 * inch,
+        topPadding=0,
+        bottomPadding=0
+    )
+    
+    right_col_frame = Frame(
+        margin_left + col_width,  # Start after left column
+        margin_bottom + 0.5 * inch,
+        col_width,  # Half of available width
+        page_height - 1.5 * inch - 0.5 * inch,
+        leftPadding=0.05 * inch,
+        rightPadding=0.1 * inch,
+        topPadding=0,
+        bottomPadding=0
+    )
+    
     # Create page template with both frames and onPage callback
     def on_first_page(canvas, doc):
         draw_header_footer(canvas, doc)
+        print(f"📄 Page {doc.page} - Using FIRST PAGE template (2 frames: content + sidebar)")
     
-    template = PageTemplate(id='FirstPage', frames=[content_frame, sidebar_frame], onPage=on_first_page)
-    doc.addPageTemplates([template])
+    def on_continuation_page(canvas, doc):
+        draw_header_footer(canvas, doc)
+        frame_count = len(doc._frameList) if hasattr(doc, '_frameList') else 0
+        print(f"📄 Page {doc.page} - Using CONTINUATION template ({frame_count} frames)")
+    
+    first_page_template = PageTemplate(id='FirstPage', frames=[content_frame, sidebar_frame], onPage=on_first_page)
+    continuation_template = PageTemplate(id='Continuation', frames=[left_col_frame, right_col_frame], onPage=on_continuation_page)
+    
+    # Add templates to document
+    doc.addPageTemplates([first_page_template, continuation_template])
     
     # Create sidebar content for right frame
     styles = getSampleStyleSheet()
@@ -336,8 +376,109 @@ def create_v2_first_page_template(
         rightIndent=0
     )
     
-    # Left content (will be populated later with markdown)
-    story.append(Paragraph("Left content placeholder", styles['Normal']))
+    # Parse markdown content - simple line-by-line approach
+    if markdown_file and Path(markdown_file).exists():
+        try:
+            with open(markdown_file, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+            
+            # Create paragraph styles
+            heading1_style = ParagraphStyle(
+                'Heading1', parent=styles['Heading1'],
+                fontSize=16, textColor=colors.black, fontName=bold_font_name,
+                spaceBefore=12, spaceAfter=8, alignment=TA_LEFT
+            )
+            
+            heading2_style = ParagraphStyle(
+                'Heading2', parent=styles['Heading2'],
+                fontSize=14, textColor=colors.black, fontName=bold_font_name,
+                spaceBefore=10, spaceAfter=6, alignment=TA_LEFT
+            )
+            
+            normal_style = ParagraphStyle(
+                'Normal', parent=styles['Normal'],
+                fontSize=10, textColor=colors.black, fontName=font_name,
+                alignment=TA_LEFT, leading=12, spaceAfter=4
+            )
+            
+            # Parse line by line - LIMIT first page to ~10 lines so sidebar stays visible
+            line_count = 0
+            max_lines = 10  # Only show first 10 lines on page 1
+            
+            for line in lines:
+                if line_count >= max_lines:
+                    break
+                    
+                line = line.strip()
+                if not line:
+                    continue
+                
+                # Process markdown syntax
+                if line.startswith('**') and line.endswith('**'):
+                    # Bold text
+                    text = line[2:-2]
+                    story.append(Paragraph(f"<b>{text}</b>", normal_style))
+                    line_count += 1
+                elif line.startswith('# '):
+                    # H1
+                    text = line[2:]
+                    story.append(Paragraph(f"<b>{text}</b>", heading1_style))
+                    line_count += 1
+                elif line.startswith('## '):
+                    # H2
+                    text = line[3:]
+                    story.append(Paragraph(f"<b>{text}</b>", heading2_style))
+                    line_count += 1
+                elif line.startswith('- ') or line.startswith('* '):
+                    # Bullet point
+                    text = line[2:]
+                    story.append(Paragraph(f"• {text}", normal_style))
+                    line_count += 1
+                elif line.startswith('!['):
+                    # Parse image: ![](assets/Images/image1.png){width="..." height="..."}
+                    import re
+                    # Extract image path and dimensions
+                    match = re.search(r'!\[.*?\]\((.*?)\)\{width="([^"]+)" height="([^"]+)"\}', line)
+                    if match:
+                        img_path = match.group(1)
+                        orig_width = float(match.group(2).replace('in', '')) * inch
+                        orig_height = float(match.group(3).replace('in', '')) * inch
+                        
+                        # Calculate max width to fit in column (approx 4" for full width, 2" for half width)
+                        max_img_width = 3.5 * inch  # Slightly smaller than column width
+                        if orig_width > max_img_width:
+                            scale_factor = max_img_width / orig_width
+                            img_width = max_img_width
+                            img_height = orig_height * scale_factor
+                        else:
+                            img_width = orig_width
+                            img_height = orig_height
+                        
+                        try:
+                            img = Image(img_path, width=img_width, height=img_height)
+                            story.append(img)
+                            story.append(Spacer(1, 0.2 * inch))
+                            line_count += 1
+                            print(f"✅ Added image: {img_path} ({img_width/inch:.2f}\" x {img_height/inch:.2f}\")")
+                        except Exception as e:
+                            print(f"⚠️  Could not load image {img_path}: {e}")
+                    continue
+                else:
+                    # Plain text
+                    # Convert inline markdown to ReportLab HTML
+                    text = line.replace('**', '<b>', 1).replace('**', '</b>', 1)
+                    text = text.replace('**', '<b>').replace('**', '</b>')
+                    if text and len(text) > 3:  # Skip very short lines
+                        story.append(Paragraph(text, normal_style))
+                        line_count += 1
+            
+            print(f"✅ Parsed markdown content from {markdown_file} (first {line_count} lines)")
+        except Exception as e:
+            print(f"⚠️  Error parsing markdown: {e}")
+            story.append(Paragraph("Error loading markdown content", styles['Normal']))
+    else:
+        story.append(Paragraph("Left content placeholder", styles['Normal']))
+    
     story.append(Spacer(1, 0.5 * inch))
     
     # Switch to sidebar frame and add info boxes
@@ -437,11 +578,92 @@ def create_v2_first_page_template(
     attribution_style = ParagraphStyle('Attribution', parent=styles['Normal'], fontSize=7, fontName=font_name, alignment=TA_RIGHT)
     story.append(Paragraph(f"All data as of {date}", attribution_style))
     
+    # Switch to continuation template BEFORE page break so page 2+ use it
+    story.append(NextPageTemplate('Continuation'))
+    
+    # Force page break after sidebar - subsequent content goes to continuation pages
+    story.append(PageBreak())
+    
+    # Note: FrameBreak will automatically occur when left column fills and switches to right column
+    
+    # Add remaining markdown content (lines 11+) that flows to continuation pages
+    if markdown_file and Path(markdown_file).exists():
+        try:
+            with open(markdown_file, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+            
+            # Continue parsing from line 11 onwards
+            line_count = 0
+            added_count = 0
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                
+                # Skip first 10 content lines
+                if line_count < 10:
+                    if line and not line.startswith('!['):
+                        line_count += 1
+                    continue
+                
+                # Process remaining markdown syntax
+                added_count += 1
+                if line.startswith('**') and line.endswith('**'):
+                    text = line[2:-2]
+                    story.append(Paragraph(f"<b>{text}</b>", normal_style))
+                elif line.startswith('# '):
+                    text = line[2:]
+                    story.append(Paragraph(f"<b>{text}</b>", heading1_style))
+                elif line.startswith('## '):
+                    text = line[3:]
+                    story.append(Paragraph(f"<b>{text}</b>", heading2_style))
+                elif line.startswith('- ') or line.startswith('* '):
+                    text = line[2:]
+                    story.append(Paragraph(f"• {text}", normal_style))
+                elif line.startswith('!['):
+                    # Parse image: ![](assets/Images/image1.png){width="..." height="..."}
+                    import re
+                    match = re.search(r'!\[.*?\]\((.*?)\)\{width="([^"]+)" height="([^"]+)"\}', line)
+                    if match:
+                        img_path = match.group(1)
+                        orig_width = float(match.group(2).replace('in', '')) * inch
+                        orig_height = float(match.group(3).replace('in', '')) * inch
+                        
+                        # Scale to fit in continuation columns (approx 3" max per column)
+                        max_img_width = 2.75 * inch  # Slightly smaller than column width for 2-col layout
+                        if orig_width > max_img_width:
+                            scale_factor = max_img_width / orig_width
+                            img_width = max_img_width
+                            img_height = orig_height * scale_factor
+                        else:
+                            img_width = orig_width
+                            img_height = orig_height
+                        
+                        try:
+                            img = Image(img_path, width=img_width, height=img_height)
+                            story.append(img)
+                            story.append(Spacer(1, 0.2 * inch))
+                            print(f"✅ Added image: {img_path} ({img_width/inch:.2f}\" x {img_height/inch:.2f}\")")
+                        except Exception as e:
+                            print(f"⚠️  Could not load image {img_path}: {e}")
+                    continue
+                else:
+                    text = line.replace('**', '<b>', 1).replace('**', '</b>', 1)
+                    text = text.replace('**', '<b>').replace('**', '</b>')
+                    if text and len(text) > 3:
+                        story.append(Paragraph(text, normal_style))
+            
+            print(f"✅ Added remaining markdown content to continuation pages: {added_count} lines")
+            print(f"📊 Total PDF pages will be generated from this content (expect 9+ pages total)")
+        except Exception as e:
+            print(f"⚠️  Error adding remaining content: {e}")
+    
+    
     # Build PDF
     doc.build(story)
     
-    print(f"✅ Created: {output_path}")
-    return output_path
+    print(f"✅ Created: {output_file}")
+    return output_file
 
 
 if __name__ == "__main__":
@@ -449,7 +671,6 @@ if __name__ == "__main__":
     create_v2_first_page_template(
         issue_number="37",
         date="02.20.2025", 
-        page_number="1",
         theme="INVENTORY GLUT",
         ticker="AZEK:US",
         timeframe="6-9 MONTHS",

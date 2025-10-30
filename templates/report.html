@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>{{ ticker }} Report</title>
+  <link rel="stylesheet" href="report.css" />
+  <style>
+    @font-face {
+      font-family: 'SourceSans3';
+      src: url('{{ font_regular }}') format('truetype');
+      font-weight: 400;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'SourceSans3';
+      src: url('{{ font_bold }}') format('truetype');
+      font-weight: 700;
+      font-style: normal;
+    }
+    html, body { font-family: 'SourceSans3', Helvetica, Arial, sans-serif; }
+  </style>
+</head>
+<body>
+
+  <!-- Running header element used in @page margin box -->
+  <div class="header-running">
+    <div class="issue-box">
+      <div class="issue-inner">
+        <span class="issue">ISSUE #{{ issue_number }}</span>
+        <span class="sep">|</span>
+        <span class="date">{{ date }}</span>
+        <span class="sep">|</span>
+        <span class="page">PAGE 9</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Running logo element for top-left margin box -->
+  <div class="logo-running">
+    <img class="logo-small" src="{{ logo_img }}" alt="Bindle" />
+  </div>
+
+  <!-- Running bottom-left footer element for multi-style lines -->
+  <div class="footer-left-running">
+    <div class="footer-left">
+      <div class="conf">CONFIDENTIAL</div>
+      <div class="not">NOT FOR DISTRIBUTION</div>
+      <div class="email">INFO@BINDLEPAPER.COM</div>
+    </div>
+  </div>
+
+  <!-- First page: 60/40 layout -->
+  <section class="first-page">
+    <div class="fp-left">
+      <!-- Title + first chunk of md_html left to CSS to manage breaks -->
+      <div class="md md-first">{{ md_first_html | safe }}</div>
+    </div>
+    <aside class="fp-right">
+
+      <table class="kv theme">
+        <tr><th>THEME:</th><td class="theme-val">{{ theme }}</td></tr>
+        <tr><th>TICKER:</th><td>{{ ticker }}</td></tr>
+        <tr><th>TIMEFRAME:</th><td>{{ timeframe }}</td></tr>
+        <tr><th>CURRENT/TARGET:</th><td>{{ current_target }}</td></tr>
+        <tr><th>DOWNSIDE:</th><td>{{ downside }}</td></tr>
+      </table>
+
+      <h3 class="sidebar-header">3-YEAR PERFORMANCE</h3>
+      <img class="chart" src="{{ chart_img }}" alt="3y" />
+
+      <h3 class="sidebar-header">COMPANY INFORMATION</h3>
+      <table class="kv kv-company">
+        <colgroup>
+          <col style="width:50%" />
+          <col style="width:50%" />
+        </colgroup>
+      {% for k,v in company_data.items() %}
+        <tr><th>{{ k }}</th><td>{{ v }}</td></tr>
+      {% endfor %}
+      </table>
+
+      <h3 class="sidebar-header">TRADE EXECUTION</h3>
+      <table class="kv kv-trade">
+        <colgroup>
+          <col style="width:50%" />
+          <col style="width:50%" />
+        </colgroup>
+      {% for k,v in trade_data.items() %}
+        <tr><th>{{ k }}</th><td>{{ v }}</td></tr>
+      {% endfor %}
+      </table>
+
+      <div class="attribution">All data as of {{ date }}</div>
+    </aside>
+  </section>
+
+  <!-- Continuation: two columns -->
+  <section class="continuation">
+    <div class="md md-cont">{{ md_cont_html | safe }}</div>
+  </section>
+
+  <!-- Footer disclaimer (placed via margin boxes in CSS) -->
+
+</body>
+</html>
+
+
