@@ -120,4 +120,3 @@ if __name__ == '__main__':
     markdown_file = sys.argv[1] if len(sys.argv) > 1 else 'AZEK.md'
     render_pdf(markdown_file=markdown_file)
 
-

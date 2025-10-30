@@ -1,6 +1,7 @@
+/* DEFAULT for ALL pages - acts as pages 2+ */
 @page {
   size: letter;
-  margin-top: 0.25in;
+  margin-top: 1.05in;  /* 0.7in issue box + comfortable spacing */
   margin-bottom: 0.85in;
   margin-left: 0.15in;
   margin-right: 0.23in;
@@ -12,7 +13,7 @@
   }
   @bottom-left {
     content: element(footer-left-box);
-    padding-top: 0; /* start footer-left content at top of margin box */
+    padding-top: 0;
   }
   @bottom-right {
     content: 'This document and the information contained herein are the exclusive property of The Bindle Paper and are for educational and informational purposes only. This material does not constitute, and should not be construed as, an offer to sell, or a solicitation of an offer to buy, any securities or related financial instruments. This document contains information and views as of the date indicated and such information and views are subject to change without notice. The Bindle Paper has no duty or obligation to update the information contained herein. Please review the full Disclaimer at the end of this document.';
@@ -20,6 +21,11 @@
     text-align: justify;
     width: 5.75in;
   }
+}
+
+/* Override page 1 with same margin as default for consistency */
+@page :first {
+  margin-top: 1.05in;  /* Same as default */
 }
 
 /* Global layout variables */
@@ -31,11 +37,14 @@
 .header-running {
   position: running(header-box);
   width: var(--sidebar-width);
+  height: 1.05in;  /* Fixed height to prevent stretching */
   margin-right: var(--right-margin);
   box-sizing: border-box;
   transform: translateX(0.15in);
+  display: block;
+  overflow: hidden;
 }
-.logo-running { position: running(logo-box); margin-top: 0.85in; }
+.logo-running { position: running(logo-box); }
 .logo-small { width: 1.90in; height: 0.7in; object-fit: contain; margin-left: 0.15in; }
 .footer-left-running { position: running(footer-left-box); }
 .footer-left { font-size: 8pt; margin: 0; line-height: 1.1; }
@@ -45,22 +54,26 @@
 .footer-left .email { font-weight: 400; margin-top: 0.04in; }
 .issue-box {
   background: #F0F0F0;
-  height: 1.05in;
-  padding: 0 0.30in;       /* left/right only */
-  display: inline-flex;    /* flex centering */
-  align-items: center;     /* vertical center */
-  justify-content: center; /* horizontal center */
+  height: 0.7in;  /* Match logo height for consistency */
+  padding: 0 0.20in;  /* Reduced padding for compact look */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   box-sizing: border-box;
   white-space: nowrap;
+  font-size: 9pt;  /* Slightly smaller to fit */
 }
 .issue-inner {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  transform: translateY(0.21in); /* push text down noticeably */
+  height: 100%;
 }
-.issue, .date, .page, .sep { font-weight: 700; font-size: 10pt; line-height: 1; display: inline-block; }
+.issue, .date, .page, .sep { font-weight: 700; font-size: 9pt; line-height: 1; display: inline-block; }
 .sep { color: #666; padding: 0 0.1in; }
+.page-number::before { content: counter(page); }
 
 /* First page layout */
 .first-page {
@@ -68,7 +81,7 @@
   grid-template-columns: 1fr var(--sidebar-width);
   grid-column-gap: 0.25in;
   page-break-after: always;
-  margin-top: 0.95in;
+  margin-top: 0.10in;  /* Spacing below header */
 }
 .fp-left { padding: 0 0 0 0.1in; }
 .fp-right { padding: 0; position: relative; }
@@ -139,7 +152,25 @@ table.kv.theme td.theme-val {
 .md-cont {
   column-count: 2;
   column-gap: 0.2in;
+  margin: 0;
+  padding: 0;
 }
+
+/* Force each paragraph/heading to respect page margins */
+.md-cont > * {
+  margin-block-start: 0.12in;
+  page-break-inside: avoid;
+}
+
+.md-cont > *:first-child {
+  margin-block-start: 0;
+}
+
+.continuation {
+  padding: 0 0.1in;
+  margin: 0;
+}
+
 .md-first > *:first-child {
   font-size: 22pt;        /* Title size for first line of AZEK.md */
   font-weight: 400;       /* Not bold */
@@ -148,8 +179,9 @@ table.kv.theme td.theme-val {
   margin-top: 0;          /* ensure it starts flush to align with sidebar */
 }
 .md img { max-width: 100%; height: auto; break-inside: avoid; }
-.md h1, .md h2, .md h3 { break-after: avoid; break-inside: avoid; }
-.md p { orphans: 2; widows: 2; }
+.md h1, .md h2, .md h3 { break-after: avoid; break-inside: avoid; margin-top: 0.15in; }
+.md p { orphans: 2; widows: 2; margin-top: 0.1in; margin-bottom: 0.1in; }
+.md > *:first-child { margin-top: 0; }  /* No margin on first element */
 
 /* Push sidebar blocks to the right edge of the sidebar column */
 .fp-right .kv.theme,
@@ -173,4 +205,3 @@ table.kv.theme td.theme-val {
   padding: 0.06in 0.06in;
   line-height: 1.50;
 }
-
