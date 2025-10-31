@@ -49,6 +49,13 @@
     </div>
   </div>
 
+  <!-- Running bottom-right footer element -->
+  <div class="footer-right-running">
+    <div class="footer-right">
+      This document and the information contained herein are the exclusive property of The Bindle Paper and are for educational and informational purposes only. This material does not constitute, and should not be construed as, an offer to sell, or a solicitation of an offer to buy, any securities or related financial instruments. This document contains information and views as of the date indicated and such information and views are subject to change without notice. The Bindle Paper has no duty or obligation to update the information contained herein. Please review the full Disclaimer at the end of this document.
+    </div>
+  </div>
+
   <!-- First page: 60/40 layout -->
   <section class="first-page">
     <div class="fp-left">
@@ -99,7 +106,26 @@
     <div class="md md-cont">{{ md_cont_html | safe }}</div>
   </section>
 
-  <!-- Footer disclaimer (placed via margin boxes in CSS) -->
+  <!-- Disclaimer page -->
+  <section class="disclaimer-page">
+    <h1 class="disclaimer-title">DISCLAIMER</h1>
+    <div class="disclaimer-content">
+      {{ disclaimer_html | safe }}
+    </div>
+  </section>
+
+  <!-- Back page - completely isolated with its own page style -->
+  <section class="back-page">
+    <div class="back-issue-box">ISSUE #{{ issue_number }} | {{ date }}</div>
+    <div class="back-logo-container">
+      <img src="{{ logo_img }}" alt="The Bindle Paper" class="back-logo" />
+    </div>
+    <div class="back-footer">
+      <div class="back-footer-conf">CONFIDENTIAL</div>
+      <div class="back-footer-conf">NOT FOR DISTRIBUTION</div>
+      <div class="back-footer-email">INFO@BINDLEPAPER.COM</div>
+    </div>
+  </section>
 
 </body>
 </html>

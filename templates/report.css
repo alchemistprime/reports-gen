@@ -16,16 +16,50 @@
     padding-top: 0;
   }
   @bottom-right {
-    content: 'This document and the information contained herein are the exclusive property of The Bindle Paper and are for educational and informational purposes only. This material does not constitute, and should not be construed as, an offer to sell, or a solicitation of an offer to buy, any securities or related financial instruments. This document contains information and views as of the date indicated and such information and views are subject to change without notice. The Bindle Paper has no duty or obligation to update the information contained herein. Please review the full Disclaimer at the end of this document.';
-    font-size: 7pt;
-    text-align: justify;
-    width: 5.75in;
+    content: element(footer-right-box);
+    padding-top: 0;
   }
 }
 
 /* Override page 1 with same margin as default for consistency */
 @page :first {
   margin-top: 1.05in;  /* Same as default */
+}
+
+/* Disclaimer page - has headers/footers but NOT the bottom-right text */
+@page disclaimerpage {
+  size: letter;
+  margin-top: 1.05in;
+  margin-bottom: 0.85in;
+  margin-left: 0.15in;
+  margin-right: 0.23in;
+  @top-left {
+    content: element(logo-box);
+  }
+  @top-right {
+    content: element(header-box);
+  }
+  @bottom-left {
+    content: element(footer-left-box);
+    padding-top: 0;
+  }
+  @bottom-right {
+    content: none;  /* Remove the "This document..." text */
+  }
+}
+
+/* Back page - completely isolated, NO headers/footers */
+@page backpage {
+  size: letter;
+  margin: 0;  /* No margins - full control in the element */
+  
+  /* Explicitly clear all margin boxes */
+  @top-left { content: none; }
+  @top-center { content: none; }
+  @top-right { content: none; }
+  @bottom-left { content: none; }
+  @bottom-center { content: none; }
+  @bottom-right { content: none; }
 }
 
 /* Global layout variables */
@@ -52,6 +86,15 @@
 .footer-left .not { font-weight: 700; margin: 0; }
 .footer-left .not { padding-bottom: 0.04in; border-bottom: 0.5pt solid #D0D0D0; }
 .footer-left .email { font-weight: 400; margin-top: 0.04in; }
+
+.footer-right-running { position: running(footer-right-box); }
+.footer-right { 
+  font-size: 7pt; 
+  margin: 0; 
+  line-height: 1.2; 
+  text-align: justify;
+  width: 5.75in;
+}
 .issue-box {
   background: #F0F0F0;
   height: 0.7in;  /* Match logo height for consistency */
@@ -204,4 +247,89 @@ table.kv.theme td.theme-val {
 .kv-trade td {
   padding: 0.06in 0.06in;
   line-height: 1.50;
+}
+
+/* Disclaimer page */
+.disclaimer-page {
+  page: disclaimerpage;  /* Use dedicated page style without bottom-right text */
+  page-break-before: always;
+  padding: 0 0.5in;
+}
+
+.disclaimer-title {
+  color: #ff0000;
+  font-weight: 700;
+  font-size: 27pt;
+  margin: 0 0 0.08in 0;  /* Minimal spacing between title and content */
+  letter-spacing: 0.02in;
+}
+
+.disclaimer-content {
+  font-size: 10.5pt;
+  line-height: 1.4;
+  text-align: justify;
+}
+
+.disclaimer-content p {
+  margin: 0;
+  text-indent: 0;
+}
+
+/* Back page - completely isolated from other pages */
+.back-page {
+  page: backpage;  /* Use the isolated @page rule with no margin boxes */
+  page-break-before: always;
+  height: 11in;  /* Full letter height */
+  width: 8.5in;  /* Full letter width */
+  position: relative;
+  box-sizing: border-box;
+  text-align: center;  /* Center inline/inline-block children */
+}
+
+.back-issue-box {
+  display: inline-block;
+  margin: 0 auto 0 auto;  /* No top margin - flush to top */
+  background: #F0F0F0;
+  height: 0.7in;  /* Match other pages */
+  padding: 0 0.20in;  /* Match other pages - horizontal only */
+  font-weight: 700;
+  font-size: 10pt;  /* Match other pages */
+  letter-spacing: 0.01in;
+  text-align: center;
+  line-height: 0.7in;  /* Vertically center text within the box */
+}
+
+.back-logo-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: auto;
+  height: auto;
+}
+
+.back-logo {
+  width: 3.55in;
+  height: auto;
+  object-fit: contain;
+}
+
+.back-footer {
+  position: absolute;
+  bottom: 0.5in;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 8pt;
+  line-height: 1.4;
+}
+
+.back-footer-conf {
+  font-weight: 700;
+  margin: 0;
+}
+
+.back-footer-email {
+  font-weight: 400;
+  margin-top: 0.06in;
 }

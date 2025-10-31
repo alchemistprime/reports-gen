@@ -60,6 +60,17 @@ def render_pdf(
 
     meta, first_html, rest_html = load_markdown_with_front_matter(md_path)
 
+    # Load disclaimer markdown
+    disclaimer_path = project_root / 'assets' / 'Base' / 'disclaimer.md'
+    if disclaimer_path.exists():
+        with open(disclaimer_path, 'r', encoding='utf-8') as f:
+            disclaimer_md = f.read()
+            # Remove the ## Disclaimer heading as we'll add it in HTML
+            disclaimer_md = disclaimer_md.replace('## Disclaimer\n', '')
+            disclaimer_html = md_to_html(disclaimer_md)
+    else:
+        disclaimer_html = ''
+
     # Defaults (can be overridden by front matter)
     defaults = {
         'issue_number': '37',
@@ -101,7 +112,12 @@ def render_pdf(
     )
     template = env.get_template('report.html')
 
-    html_str = template.render(md_first_html=first_html, md_cont_html=rest_html, **data)
+    html_str = template.render(
+        md_first_html=first_html, 
+        md_cont_html=rest_html, 
+        disclaimer_html=disclaimer_html,
+        **data
+    )
 
     css_path = str(templates_dir / 'report.css')
     output_path = project_root / output_file
