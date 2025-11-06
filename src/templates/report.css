@@ -6,7 +6,7 @@
   margin-left: 0.15in;
   margin-right: 0.23in;
   @top-left {
-    content: element(logo-box);
+    content: element(logo-box-rest);  /* Use smaller logo for pages 2+ */
   }
   @top-right {
     content: element(header-box);
@@ -21,9 +21,12 @@
   }
 }
 
-/* Override page 1 with same margin as default for consistency */
+/* Page 1 - use current size logo */
 @page :first {
   margin-top: 1.05in;  /* Same as default */
+  @top-left {
+    content: element(logo-box-first);  /* Use larger logo for page 1 */
+  }
 }
 
 /* Disclaimer page - has headers/footers but NOT the bottom-right text */
@@ -34,7 +37,7 @@
   margin-left: 0.15in;
   margin-right: 0.23in;
   @top-left {
-    content: element(logo-box);
+    content: element(logo-box-first);  /* Use larger logo same as page 1 */
   }
   @top-right {
     content: element(header-box);
@@ -78,8 +81,13 @@
   display: block;
   overflow: hidden;
 }
-.logo-running { position: running(logo-box); }
-.logo-small { width: 1.90in; height: 0.7in; object-fit: contain; margin-left: 0.15in; }
+/* Running element for page 1 and disclaimer - larger logo */
+.logo-running-first { position: running(logo-box-first); }
+.logo-first { width: 1.90in; height: 0.7in; object-fit: contain; margin-left: 0.15in; }
+
+/* Running element for pages 2+ - smaller logo */
+.logo-running-rest { position: running(logo-box-rest); }
+.logo-small { width: 1.40in; height: 0.52in; object-fit: contain; margin-left: 0.15in; }
 .footer-left-running { position: running(footer-left-box); }
 .footer-left { font-size: 8pt; margin: 0; line-height: 1.1; }
 .footer-left .conf,
@@ -105,7 +113,7 @@
   width: 100%;
   box-sizing: border-box;
   white-space: nowrap;
-  font-size: 9pt;  /* Slightly smaller to fit */
+  font-size: 11pt;  /* Slightly smaller to fit */
 }
 .issue-inner {
   display: flex;
@@ -194,7 +202,7 @@ table.kv.theme td.theme-val {
 /* Continuation two columns */
 .md-cont {
   column-count: 2;
-  column-gap: 0.2in;
+  column-gap: 0.3in;
   margin: 0;
   padding: 0;
 }
@@ -220,11 +228,23 @@ table.kv.theme td.theme-val {
   line-height: 1.2;
   margin-bottom: 0.24in;  /* extra space after title */
   margin-top: 0;          /* ensure it starts flush to align with sidebar */
+  text-align: left;       /* Keep title left-aligned, not justified */
 }
 .md img { max-width: 100%; height: auto; break-inside: avoid; }
 .md h1, .md h2, .md h3 { break-after: avoid; break-inside: avoid; margin-top: 0.15in; }
-.md p { orphans: 2; widows: 2; margin-top: 0.1in; margin-bottom: 0.1in; }
+.md p { orphans: 2; widows: 2; margin-top: 0.1in; margin-bottom: 0.1in; text-align: justify; }
 .md > *:first-child { margin-top: 0; }  /* No margin on first element */
+
+/* List styles - reduce indentation */
+.md ul, .md ol {
+  padding-left: 0.2in;  /* Reduced from default ~0.4in to move bullets left */
+  margin-left: 0;
+  margin-top: 0.1in;
+  margin-bottom: 0.1in;
+}
+.md li {
+  margin-bottom: 0.05in;
+}
 
 /* Push sidebar blocks to the right edge of the sidebar column */
 .fp-right .kv.theme,

@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+"""
+Reports Generator - Main Entry Point
+
+A command-line tool for processing stock ticker reports from DOCX to PDF.
+
+Usage:
+    reports-gen TICKER              # Process a ticker through full pipeline
+    reports-gen TICKER --help       # Show all options
+"""
+
+import sys
+from pathlib import Path
+
+# Add src to path so we can import from it
+src_path = Path(__file__).parent / 'src'
+sys.path.insert(0, str(src_path))
+
+from process_ticker import main
+
+if __name__ == "__main__":
+    main()
+

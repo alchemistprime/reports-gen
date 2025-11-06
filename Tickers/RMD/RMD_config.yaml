@@ -1,0 +1,38 @@
+# RMD (ResMed) Ticker Configuration
+# This file contains ticker-specific metadata for report generation
+
+# Report metadata
+issue_number: '38'
+date: '11.03.2025'
+table_date: '10.30.2025'  # Date for table data (may differ from report date)
+theme: 'GLP-1 COMPETITION'
+ticker: 'RMD:US'
+timeframe: '6-9 MONTHS'
+current_target: '$250.00 | $180.00'
+downside: '28.0%'
+
+# Company data
+company_data:
+  SECTOR: 'Healthcare'
+  LOCATION: 'United States'
+  MARKET CAP: '$38.2B'
+  EV/EBITDA: '22.5'
+  TRAILING P/E: '32.4'
+  PROFIT MARGIN: '18.2%'
+  TOTAL CASH/DEBT: '$500M / $1.2B'
+  52 WEEK RANGE: '$180.00 - $265.00'
+
+# Trading data
+trade_data:
+  DAILY VOLUME: '$250M'
+  DAYS TO COVER: '2.8'
+  SHARES SHORT: '2.1%'
+  BORROW COST: '0.5%'
+
+# Report saving naming convention
+# ticker.issue.date.pdf
+report_saving:
+  ticker: 'RMD'
+  issue: 'Issue38'
+  date: '11032025'
+

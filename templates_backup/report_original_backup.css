@@ -1,0 +1,336 @@
+/* DEFAULT for ALL pages - acts as pages 2+ */
+@page {
+  size: letter;
+  margin-top: 1.05in;  /* 0.7in issue box + comfortable spacing */
+  margin-bottom: 0.85in;
+  margin-left: 0.15in;
+  margin-right: 0.23in;
+  @top-left {
+    content: element(logo-box);
+  }
+  @top-right {
+    content: element(header-box);
+  }
+  @bottom-left {
+    content: element(footer-left-box);
+    padding-top: 0;
+  }
+  @bottom-right {
+    content: element(footer-right-box);
+    padding-top: 0;
+  }
+}
+
+/* Override page 1 with same margin as default for consistency */
+@page :first {
+  margin-top: 1.05in;  /* Same as default */
+}
+
+/* Disclaimer page - has headers/footers but NOT the bottom-right text */
+@page disclaimerpage {
+  size: letter;
+  margin-top: 1.05in;
+  margin-bottom: 0.85in;
+  margin-left: 0.15in;
+  margin-right: 0.23in;
+  @top-left {
+    content: element(logo-box);
+  }
+  @top-right {
+    content: element(header-box);
+  }
+  @bottom-left {
+    content: element(footer-left-box);
+    padding-top: 0;
+  }
+  @bottom-right {
+    content: none;  /* Remove the "This document..." text */
+  }
+}
+
+/* Back page - completely isolated, NO headers/footers */
+@page backpage {
+  size: letter;
+  margin: 0;  /* No margins - full control in the element */
+  
+  /* Explicitly clear all margin boxes */
+  @top-left { content: none; }
+  @top-center { content: none; }
+  @top-right { content: none; }
+  @bottom-left { content: none; }
+  @bottom-center { content: none; }
+  @bottom-right { content: none; }
+}
+
+/* Global layout variables */
+:root {
+  --sidebar-width: 2.85in;
+  --right-margin: 0.23in; /* keep in sync with @page margin-right */
+}
+
+.header-running {
+  position: running(header-box);
+  width: var(--sidebar-width);
+  height: 1.05in;  /* Fixed height to prevent stretching */
+  margin-right: var(--right-margin);
+  box-sizing: border-box;
+  transform: translateX(0.15in);
+  display: block;
+  overflow: hidden;
+}
+.logo-running { position: running(logo-box); }
+.logo-small { width: 1.90in; height: 0.7in; object-fit: contain; margin-left: 0.15in; }
+.footer-left-running { position: running(footer-left-box); }
+.footer-left { font-size: 8pt; margin: 0; line-height: 1.1; }
+.footer-left .conf,
+.footer-left .not { font-weight: 700; margin: 0; }
+.footer-left .not { padding-bottom: 0.04in; border-bottom: 0.5pt solid #D0D0D0; }
+.footer-left .email { font-weight: 400; margin-top: 0.04in; }
+
+.footer-right-running { position: running(footer-right-box); }
+.footer-right { 
+  font-size: 7pt; 
+  margin: 0; 
+  line-height: 1.2; 
+  text-align: justify;
+  width: 5.75in;
+}
+.issue-box {
+  background: #F0F0F0;
+  height: 0.7in;  /* Match logo height for consistency */
+  padding: 0 0.20in;  /* Reduced padding for compact look */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+  white-space: nowrap;
+  font-size: 9pt;  /* Slightly smaller to fit */
+}
+.issue-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 100%;
+}
+.issue, .date, .page, .sep { font-weight: 700; font-size: 9pt; line-height: 1; display: inline-block; }
+.sep { color: #666; padding: 0 0.1in; }
+.page-number::before { content: counter(page); }
+
+/* First page layout */
+.first-page {
+  display: grid;
+  grid-template-columns: 1fr var(--sidebar-width);
+  grid-column-gap: 0.25in;
+  page-break-after: always;
+  margin-top: 0.10in;  /* Spacing below header */
+}
+.fp-left { padding: 0 0 0 0.1in; }
+.fp-right { padding: 0; position: relative; }
+
+.logo { width: 1.9in; height: 0.7in; object-fit: contain; }
+
+.sidebar-header {
+  color: #ff0000; /* red */
+  font-weight: 700;
+  font-size: 13pt;
+  margin: 0.2in 0 0.1in 0;
+}
+
+table.kv {
+  width: var(--sidebar-width);
+  border: 1px solid #D0D0D0;
+  border-collapse: collapse;
+  background: #FFFFFF;
+}
+
+table.kv th {
+  background: #F5F5F5;
+  font-weight: 600;
+  text-align: center;
+  padding: 0.06in;
+  border-right: 1px solid #D0D0D0;
+  border: 1px solid #D0D0D0;
+  vertical-align: middle;
+  font-size: 10pt;
+}
+
+table.kv td {
+  padding: 0.07in;
+  text-align: center;
+  font-weight: 400;
+  background: #FFFFFF;
+  border: 1px solid #D0D0D0;
+  vertical-align: middle;
+  font-size: 10pt;
+}
+
+/* Theme table overrides: no borders, no fill, tighter rows */
+table.kv.theme {
+  border: none;
+  background: transparent;
+}
+
+table.kv.theme th,
+table.kv.theme td {
+  border: none;
+  background: transparent;
+  padding: 0.035in;
+  line-height: 1.0;
+  text-align: left;
+  font-size: 12pt;
+}
+
+table.kv.theme td.theme-val {
+  color: #ff0000;
+  font-weight: 700;
+}
+
+
+.chart { width: var(--sidebar-width); height: 1.5in; object-fit: contain; }
+.attribution { text-align: right; font-size: 7pt; margin-top: 0.04in; }
+
+/* Continuation two columns */
+.md-cont {
+  column-count: 2;
+  column-gap: 0.3in;
+  margin: 0;
+  padding: 0;
+}
+
+/* Force each paragraph/heading to respect page margins */
+.md-cont > * {
+  margin-block-start: 0.12in;
+  page-break-inside: avoid;
+}
+
+.md-cont > *:first-child {
+  margin-block-start: 0;
+}
+
+.continuation {
+  padding: 0 0.1in;
+  margin: 0;
+}
+
+.md-first > *:first-child {
+  font-size: 22pt;        /* Title size for first line of AZEK.md */
+  font-weight: 400;       /* Not bold */
+  line-height: 1.2;
+  margin-bottom: 0.24in;  /* extra space after title */
+  margin-top: 0;          /* ensure it starts flush to align with sidebar */
+  text-align: left;       /* Keep title left-aligned, not justified */
+}
+.md img { max-width: 100%; height: auto; break-inside: avoid; }
+.md h1, .md h2, .md h3 { break-after: avoid; break-inside: avoid; margin-top: 0.15in; }
+.md p { orphans: 2; widows: 2; margin-top: 0.1in; margin-bottom: 0.1in; text-align: justify; }
+.md > *:first-child { margin-top: 0; }  /* No margin on first element */
+
+/* Push sidebar blocks to the right edge of the sidebar column */
+.fp-right .kv.theme,
+.fp-right .kv-company,
+.fp-right .kv-trade,
+.fp-right .chart {
+  width: var(--sidebar-width);
+  margin-left: auto; /* flush right */
+}
+
+/* Company table row height */
+.kv-company th,
+.kv-company td {
+  padding: 0.06in 0.06in;   /* ↓ tighten or ↑ loosen */
+  line-height: 1.50;        /* tweak 0.95–1.2 as needed */
+}
+
+/* Trade table row height */
+.kv-trade th,
+.kv-trade td {
+  padding: 0.06in 0.06in;
+  line-height: 1.50;
+}
+
+/* Disclaimer page */
+.disclaimer-page {
+  page: disclaimerpage;  /* Use dedicated page style without bottom-right text */
+  page-break-before: always;
+  padding: 0 0.5in;
+}
+
+.disclaimer-title {
+  color: #ff0000;
+  font-weight: 700;
+  font-size: 27pt;
+  margin: 0 0 0.08in 0;  /* Minimal spacing between title and content */
+  letter-spacing: 0.02in;
+}
+
+.disclaimer-content {
+  font-size: 10.5pt;
+  line-height: 1.4;
+  text-align: justify;
+}
+
+.disclaimer-content p {
+  margin: 0;
+  text-indent: 0;
+}
+
+/* Back page - completely isolated from other pages */
+.back-page {
+  page: backpage;  /* Use the isolated @page rule with no margin boxes */
+  page-break-before: always;
+  height: 11in;  /* Full letter height */
+  width: 8.5in;  /* Full letter width */
+  position: relative;
+  box-sizing: border-box;
+  text-align: center;  /* Center inline/inline-block children */
+}
+
+.back-issue-box {
+  display: inline-block;
+  margin: 0 auto 0 auto;  /* No top margin - flush to top */
+  background: #F0F0F0;
+  height: 0.7in;  /* Match other pages */
+  padding: 0 0.20in;  /* Match other pages - horizontal only */
+  font-weight: 700;
+  font-size: 10pt;  /* Match other pages */
+  letter-spacing: 0.01in;
+  text-align: center;
+  line-height: 0.7in;  /* Vertically center text within the box */
+}
+
+.back-logo-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: auto;
+  height: auto;
+}
+
+.back-logo {
+  width: 3.55in;
+  height: auto;
+  object-fit: contain;
+}
+
+.back-footer {
+  position: absolute;
+  bottom: 0.5in;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 8pt;
+  line-height: 1.4;
+}
+
+.back-footer-conf {
+  font-weight: 700;
+  margin: 0;
+}
+
+.back-footer-email {
+  font-weight: 400;
+  margin-top: 0.06in;
+}

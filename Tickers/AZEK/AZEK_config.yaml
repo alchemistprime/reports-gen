@@ -1,0 +1,38 @@
+# AZEK Ticker Configuration
+# This file contains ticker-specific metadata for report generation
+
+# Report metadata
+issue_number: '37'
+date: '02.20.2025'
+table_date: '02.19.2025'  # Date for table data (may differ from report date)
+theme: 'INVENTORY GLUT'
+ticker: 'AZEK:US'
+timeframe: '6-9 MONTHS'
+current_target: '$49.90 | $30.00'
+downside: '39.9%'
+
+# Company data
+company_data:
+  SECTOR: 'Industrials'
+  LOCATION: 'United States'
+  MARKET CAP: '$7.3B'
+  EV/EBITDA: '20.94'
+  TRAILING P/E: '51.55'
+  PROFIT MARGIN: '9.85%'
+  TOTAL CASH/DEBT: '$148M / $552M'
+  52 WEEK RANGE: '$35.48 - $54.91'
+
+# Trading data
+trade_data:
+  DAILY VOLUME: '$74M'
+  DAYS TO COVER: '3.26'
+  SHARES SHORT: '3.33%'
+  BORROW COST: '0.3%'
+
+# Report saving naming convention
+# ticker.issue.date.pdf
+report_saving:
+  ticker: 'AZEK'
+  issue: 'Issue37'
+  date: '02202025'
+  
