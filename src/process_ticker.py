@@ -67,6 +67,8 @@ def run_command(cmd: list[str], description: str) -> bool:
 
 @click.command()
 @click.argument('ticker', type=str)
+@click.option('--report-type', '-r', type=click.Choice(['Initiation', 'Updates']), default='Initiation',
+              help='Report type: Initiation or Updates (default: Initiation)')
 @click.option('--skip-conversion', is_flag=True, 
               help='Skip DOCX to Markdown conversion (use existing markdown)')
 @click.option('--skip-pdf', is_flag=True,
@@ -74,7 +76,7 @@ def run_command(cmd: list[str], description: str) -> bool:
 @click.option('--max-height', type=float, default=9.5,
               help='Maximum height in inches for first page content (default: 9.5)')
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose output')
-def main(ticker: str, skip_conversion: bool, skip_pdf: bool, max_height: float, verbose: bool):
+def main(ticker: str, report_type: str, skip_conversion: bool, skip_pdf: bool, max_height: float, verbose: bool):
     """
     Process a ticker through the full pipeline: DOCX → Markdown → PDF
     
@@ -83,15 +85,15 @@ def main(ticker: str, skip_conversion: bool, skip_pdf: bool, max_height: float, 
     project_root = Path(__file__).parent.parent  # Go up from src/ to project root
     ticker = ticker.upper()
     
-    # Define paths
-    ticker_dir = project_root / 'Tickers' / ticker
+    # Define paths with report type subfolder
+    ticker_dir = project_root / 'Tickers' / ticker / report_type
     docx_file = ticker_dir / f'{ticker}.docx'
     markdown_file = ticker_dir / f'{ticker}.md'
     pdf_filename = get_pdf_filename(ticker, ticker_dir)
     pdf_file = ticker_dir / pdf_filename
     
     print(f"\n{'='*60}")
-    print(f"📊 Processing Ticker: {ticker}")
+    print(f"📊 Processing Ticker: {ticker} ({report_type})")
     print(f"{'='*60}")
     print(f"📂 Ticker directory: {ticker_dir}")
     print(f"📄 DOCX file: {docx_file}")
@@ -111,7 +113,8 @@ def main(ticker: str, skip_conversion: bool, skip_pdf: bool, max_height: float, 
             sys.executable,
             str(project_root / 'src' / 'docx_to_markdown.py'),
             str(docx_file),
-            '--ticker', ticker
+            '--ticker', ticker,
+            '--report-type', report_type
         ]
         if verbose:
             cmd.append('--verbose')
@@ -139,6 +142,7 @@ def main(ticker: str, skip_conversion: bool, skip_pdf: bool, max_height: float, 
             sys.executable,
             str(project_root / 'src' / 'generate_report.py'),
             '--ticker', ticker,
+            '--report-type', report_type,
             '--max-height', str(max_height)
         ]
         

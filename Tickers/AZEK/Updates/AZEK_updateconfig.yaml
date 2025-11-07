@@ -1,0 +1,22 @@
+# AZEK Updates Report Configuration
+# This file defines the metadata and pricing data for Updates reports
+
+# Report identification
+issue_number: "37"
+update_number: "1"
+date: "11.07.2025"
+
+# Report title and ticker
+title: "Strong Q1 Results Drive Momentum"
+ticker: "AZEK"
+stock: "The AZEK Company Inc. (AZEK)"
+
+# Reference to initiation report
+initiation_publish_date: "02.20.2025"
+initiation_report_link: "https://bindlepaper.com/reports/AZEK.Issue37.02202025.pdf"
+
+# Pricing data
+price_at_publication: "52.30"
+recent_price: "58.45"
+target_price: "65.00"
+

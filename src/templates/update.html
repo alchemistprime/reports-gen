@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>{{ ticker }} Report</title>
-  <link rel="stylesheet" href="report.css" />
+  <title>{{ ticker }} Update Report</title>
+  <link rel="stylesheet" href="update.css" />
   <style>
     @font-face {
       font-family: 'SourceSans3';
@@ -26,7 +26,7 @@
   <div class="header-running">
     <div class="issue-box">
       <div class="issue-inner">
-        <span class="issue">ISSUE #{{ issue_number }}</span>
+        <span class="issue">ISSUE #{{ issue_number }}.{{ update_number }}</span>
         <span class="sep">|</span>
         <span class="date">{{ date }}</span>
         <span class="sep">|</span>
@@ -61,85 +61,65 @@
     </div>
   </div>
 
-  <!-- First page: 60/40 layout -->
+  <!-- First page: Two update containers stacked vertically -->
   <section class="first-page">
-    <div class="fp-left">
-      <!-- Title + first chunk of md_html left to CSS to manage breaks -->
-      <div class="md md-first">{{ md_first_html | safe }}</div>
+    <div class="update-containers">
+      <!-- Container 1: Update number and title (RED border, full width) -->
+      <div class="update-info-left">
+        <div class="update-number">UPDATE #{{ update_number }}</div>
+        <div class="update-title">{{ title | upper }}</div>
+      </div>
+      
+      <!-- Container 2: Company info and prices (BURNT ORANGE border, full width, 2 columns inside) -->
+      <div class="update-info-right">
+        <!-- Left column: Company info -->
+        <div class="update-info-left-col">
+          <div class="company-name">{{ stock }}</div>
+          <div class="publish-info">Published {{ initiation_publish_date }}</div>
+          <a href="{{ initiation_report_link }}" class="init-report-link">SEE INITIATING REPORT</a>
+        </div>
+        
+        <!-- Right column: Price table (2 columns, 3 rows) -->
+        <table class="price-table">
+          <colgroup>
+            <col style="width:60%" />
+            <col style="width:40%" />
+          </colgroup>
+          <tr>
+            <td class="price-label">Price at Publication</td>
+            <td class="price-value">${{ price_at_publication }}</td>
+          </tr>
+          <tr>
+            <td class="price-label">Recent Price</td>
+            <td class="price-value">${{ recent_price }}</td>
+          </tr>
+          <tr>
+            <td class="price-label">Target Price</td>
+            <td class="price-value">${{ target_price }}</td>
+          </tr>
+        </table>
+      </div>
     </div>
-    <aside class="fp-right">
-
-      <table class="kv theme">
-        <tr><th>THEME:</th><td class="theme-val">{{ theme }}</td></tr>
-        <tr><th>TICKER:</th><td>{{ ticker }}</td></tr>
-        <tr><th>TIMEFRAME:</th><td>{{ timeframe }}</td></tr>
-        <tr><th>CURRENT/TARGET:</th><td>{{ current_target }}</td></tr>
-        <tr><th>DOWNSIDE:</th><td>{{ downside }}</td></tr>
-      </table>
-
-      <h3 class="sidebar-header">3-YEAR PERFORMANCE</h3>
-      <img class="chart" src="{{ chart_img }}" alt="3y" />
-
-      <h3 class="sidebar-header">COMPANY INFORMATION</h3>
-      <table class="kv kv-company">
-        <colgroup>
-          <col style="width:50%" />
-          <col style="width:50%" />
-        </colgroup>
-      {% for k,v in company_data.items() %}
-        <tr><th>{{ k }}</th><td>{{ v }}</td></tr>
-      {% endfor %}
-      </table>
-
-      <h3 class="sidebar-header">TRADE EXECUTION</h3>
-      <table class="kv kv-trade">
-        <colgroup>
-          <col style="width:50%" />
-          <col style="width:50%" />
-        </colgroup>
-      {% for k,v in trade_data.items() %}
-        <tr><th>{{ k }}</th><td>{{ v }}</td></tr>
-      {% endfor %}
-      </table>
-
-      <div class="attribution">All table data as of {{ table_date }}</div>
-    </aside>
+    
+    <!-- Two-column markdown content -->
+    <div class="update-content">
+      <div class="md md-first">{{ md_first_html | safe }}</div>
+      <div class="md md-cont">{{ md_cont_html | safe }}</div>
+    </div>
+    
+    <!-- Symbol logo at end of markdown content (same page) -->
+    {% if symbol_logo %}
+    <div class="continuation-logo">
+      <img src="{{ symbol_logo }}" alt="Company Logo" class="symbol-logo-img" />
+    </div>
+    {% endif %}
   </section>
-
-  <!-- Continuation: two columns -->
-  <section class="continuation">
-    <div class="md md-cont">{{ md_cont_html | safe }}</div>
-  </section>
-
-  <!-- Symbol logo on last continuation page (positioned above footer) -->
-  {% if symbol_logo %}
-  <div class="continuation-logo">
-    <img src="{{ symbol_logo }}" alt="Company Logo" class="symbol-logo-img" />
-  </div>
-  {% endif %}
 
   <!-- Disclaimer page -->
   <section class="disclaimer-page">
     <h1 class="disclaimer-title">DISCLAIMER</h1>
     <div class="disclaimer-content">
       {{ disclaimer_html | safe }}
-    </div>
-  </section>
-
-  <!-- Back page - completely isolated with its own page style -->
-  <section class="back-page">
-    <div class="back-issue-box">
-      <span class="back-issue-text">ISSUE #{{ issue_number }}</span>
-      <span class="back-sep">|</span>
-      <span class="back-date-text">{{ date }}</span>
-    </div>
-    <div class="back-logo-container">
-      <img src="{{ logo_img }}" alt="The Bindle Paper" class="back-logo" />
-    </div>
-    <div class="back-footer">
-      <div class="back-footer-conf">CONFIDENTIAL</div>
-      <div class="back-footer-conf">NOT FOR DISTRIBUTION</div>
-      <div class="back-footer-email">INFO@BINDLEPAPER.COM</div>
     </div>
   </section>
 

@@ -258,7 +258,11 @@ def style_exhibit_source_lines(html: str) -> str:
 
 
 def style_bold_headings(html: str, first_page: bool = False) -> str:
-    """Add extra margin-top to bold headings and make first heading red on first page"""
+    """Style KEY POINTS heading on first page only (red, 13pt, bold)"""
+    # NOTE: Previously this function added margin-top: 0.35in to all bold headings
+    # This was disabled 2025-01-06 to preserve natural spacing from markdown
+    # Now only styles KEY POINTS on first page to match sidebar headers
+    
     # Match <p><strong>TEXT</strong></p> - paragraphs containing only bold text
     pattern = r'<p><strong>(.*?)</strong></p>'
     
@@ -276,14 +280,12 @@ def style_bold_headings(html: str, first_page: bool = False) -> str:
         bold_text = match.group(1)
         
         if first_page and actual_index == 0:
-            # First bold heading on first page (KEY POINTS): match sidebar headers
-            styled = f'<p style="color: #ff0000; font-size: 13pt; font-weight: 700;"><strong>{bold_text}</strong></p>'
-        elif actual_index == 0 and not first_page:
-            # First heading on other pages: just extra margin
-            styled = f'<p style="margin-top: 0.35in;"><strong>{bold_text}</strong></p>'
+            # First bold heading on first page (KEY POINTS): black, 13pt, bold
+            styled = f'<p style="color: #000000; font-size: 13pt; font-weight: 700;"><strong>{bold_text}</strong></p>'
         else:
-            # All other bold headings: extra margin
-            styled = f'<p style="margin-top: 0.35in;"><strong>{bold_text}</strong></p>'
+            # All other bold headings: no styling, use natural spacing
+            # Previous behavior: styled = f'<p style="margin-top: 0.35in;"><strong>{bold_text}</strong></p>'
+            styled = f'<p><strong>{bold_text}</strong></p>'
         
         result = result[:start] + styled + result[end:]
     
@@ -313,6 +315,40 @@ def load_ticker_config(ticker_dir: Path, ticker: str) -> Dict[str, Any]:
             if config is None:
                 return {}
             print(f"✅ Loaded ticker config from {config_file}")
+            return config
+    except yaml.YAMLError as e:
+        print(f"⚠️  Error parsing {config_file}: {e}")
+        print(f"   Using defaults instead")
+        return {}
+    except Exception as e:
+        print(f"⚠️  Error reading {config_file}: {e}")
+        print(f"   Using defaults instead")
+        return {}
+
+
+def load_update_config(ticker_dir: Path, ticker: str) -> Dict[str, Any]:
+    """
+    Load update-specific configuration from {TICKER}_updateconfig.yaml file.
+    
+    Args:
+        ticker_dir: Path to the ticker Updates directory
+        ticker: Ticker symbol (e.g., 'AZEK')
+    
+    Returns:
+        Dictionary with config values, or empty dict if not found
+    """
+    config_file = ticker_dir / f'{ticker}_updateconfig.yaml'
+    
+    if not config_file.exists():
+        print(f"ℹ️  No update config file found at {config_file}, using defaults")
+        return {}
+    
+    try:
+        with open(config_file, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+            if config is None:
+                return {}
+            print(f"✅ Loaded update config from {config_file}")
             return config
     except yaml.YAMLError as e:
         print(f"⚠️  Error parsing {config_file}: {e}")
@@ -354,13 +390,17 @@ def render_pdf(
     markdown_file: str = None,
     output_file: str = None,
     max_height_inches: float = 9.5,
+    report_type: str = 'Initiation',  # 'Initiation' or 'Updates'
 ) -> str:
     project_root = Path(__file__).parent.parent  # Go up from src/ to project root
     templates_dir = Path(__file__).parent / 'templates'  # Templates are in src/templates/
 
-    # If markdown_file not specified, use ticker-based path
+    # Ticker directory with report type subfolder
+    ticker_dir = project_root / 'Tickers' / ticker / report_type
+    
+    # If markdown_file not specified, use ticker-based path in report type folder
     if markdown_file is None:
-        md_path = project_root / 'Tickers' / ticker / f'{ticker}.md'
+        md_path = ticker_dir / f'{ticker}.md'
     else:
         md_path = project_root / markdown_file
     
@@ -380,14 +420,17 @@ def render_pdf(
     else:
         disclaimer_html = ''
 
-    # Set base URL to the ticker directory so relative paths (images) resolve correctly
-    ticker_dir = project_root / 'Tickers' / ticker
-    base_url = str(ticker_dir) if (ticker_dir).exists() else str(project_root)
+    # Set base URL to the ticker report type directory so relative paths (images) resolve correctly
+    base_url = str(ticker_dir) if ticker_dir.exists() else str(project_root)
     
-    # Load ticker-specific configuration
-    ticker_config = load_ticker_config(ticker_dir, ticker) if ticker_dir.exists() else {}
+    # Load configuration based on report type
+    if report_type == 'Updates':
+        ticker_config = load_update_config(ticker_dir, ticker) if ticker_dir.exists() else {}
+    else:
+        # Initiation reports use standard config
+        ticker_config = load_ticker_config(ticker_dir, ticker) if ticker_dir.exists() else {}
     
-    # Resolve chart image: ticker-specific only
+    # Resolve chart image: ticker-specific only, in report type folder
     ticker_chart = ticker_dir / f'{ticker}_chart.png' if ticker_dir.exists() else None
     if ticker_chart and ticker_chart.exists():
         chart_img = ticker_chart.as_uri()
@@ -402,9 +445,10 @@ def render_pdf(
     global_defaults = {
         # Shared assets (logo and fonts)
         'logo_img': (project_root / 'assets' / 'Base' / 'bindle_logo.png').as_uri(),
+        'symbol_logo': (project_root / 'assets' / 'Base' / 'symbol_logo.png').as_uri(),
         'font_regular': (project_root / 'assets' / 'fonts' / 'Source_Sans_3' / 'static' / 'SourceSans3-Regular.ttf').as_uri(),
         'font_bold': (project_root / 'assets' / 'fonts' / 'Source_Sans_3' / 'static' / 'SourceSans3-Bold.ttf').as_uri(),
-        # Chart image
+        # Ticker-specific images
         'chart_img': chart_img,
     }
 
@@ -416,7 +460,15 @@ def render_pdf(
         loader=FileSystemLoader(str(templates_dir)),
         autoescape=select_autoescape(['html'])
     )
-    template = env.get_template('report.html')
+    
+    # Select template and CSS based on report type
+    if report_type == 'Updates':
+        template = env.get_template('update.html')
+        css_path = str(templates_dir / 'update.css')
+    else:
+        # Initiation reports use standard template
+        template = env.get_template('report.html')
+        css_path = str(templates_dir / 'report.css')
 
     html_str = template.render(
         md_first_html=first_html,
@@ -424,20 +476,24 @@ def render_pdf(
         disclaimer_html=disclaimer_html,
         **data
     )
-
-    css_path = str(templates_dir / 'report.css')
     
-    # If output_file not specified, use ticker-based path
+    # If output_file not specified, use ticker-based path in report type folder
     if output_file is None:
-        # Check if report_saving config exists to construct custom filename
-        if 'report_saving' in data:
-            rs = data['report_saving']
-            filename = f"{rs['ticker']}.{rs['issue']}.{rs['date']}.pdf"
+        if report_type == 'Updates':
+            # Updates filename format: {ticker}.Issue{issue_number}.Update{update_number}.{date}.pdf
+            # Remove periods from date for filename (11.07.2025 -> 1172025)
+            date_str = data.get('date', 'MMDDYYYY').replace('.', '')
+            filename = f"{data.get('ticker', ticker)}.Issue{data.get('issue_number', '00')}.Update{data.get('update_number', '00')}.{date_str}.pdf"
         else:
-            # Fall back to default convention
-            filename = f'{ticker}_report.pdf'
+            # Initiation reports use report_saving config or default
+            if 'report_saving' in data:
+                rs = data['report_saving']
+                filename = f"{rs['ticker']}.{rs['issue']}.{rs['date']}.pdf"
+            else:
+                # Fall back to default convention
+                filename = f'{ticker}_report.pdf'
         
-        output_path = project_root / 'Tickers' / ticker / filename
+        output_path = ticker_dir / filename  # Save to report type folder
     else:
         output_path = project_root / output_file
     
@@ -457,14 +513,23 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate PDF report from markdown file')
     parser.add_argument('--ticker', '-t', type=str, default='AZEK',
                         help='Ticker symbol (e.g., AZEK)')
+    parser.add_argument('--report-type', '-r', type=str, default='Initiation',
+                        choices=['Initiation', 'Updates'],
+                        help='Report type: Initiation or Updates (default: Initiation)')
     parser.add_argument('--markdown', '-m', type=str, default=None,
-                        help='Path to markdown file (defaults to Tickers/{ticker}/{ticker}.md)')
+                        help='Path to markdown file (defaults to Tickers/{ticker}/{report_type}/{ticker}.md)')
     parser.add_argument('--output', '-o', type=str, default=None,
-                        help='Output PDF path (defaults to Tickers/{ticker}/{ticker}_report.pdf)')
+                        help='Output PDF path (defaults to Tickers/{ticker}/{report_type}/{ticker}_report.pdf)')
     parser.add_argument('--max-height', type=float, default=9.5,
                         help='Maximum height in inches for first page content (default: 9.5)')
     
     args = parser.parse_args()
     
-    render_pdf(ticker=args.ticker, markdown_file=args.markdown, output_file=args.output, max_height_inches=args.max_height)
+    render_pdf(
+        ticker=args.ticker, 
+        markdown_file=args.markdown, 
+        output_file=args.output, 
+        max_height_inches=args.max_height,
+        report_type=args.report_type
+    )
 

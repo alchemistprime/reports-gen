@@ -127,89 +127,152 @@
 .sep { color: #666; padding: 0 0.1in; }
 .page-number::before { content: counter(page); }
 
-/* First page layout */
+/* First page layout for Updates */
 .first-page {
-  display: grid;
-  grid-template-columns: 1fr var(--sidebar-width);
-  grid-column-gap: 0.25in;
   page-break-after: always;
   margin-top: 0.10in;  /* Spacing below header */
+  padding: 0 0.1in;  /* Match continuation section margins */
 }
-.fp-left { padding: 0 0 0 0.1in; }
-.fp-right { padding: 0; position: relative; }
 
-.logo { width: 1.9in; height: 0.7in; object-fit: contain; }
+/* Two update info containers - stacked vertically */
+.update-containers {
+  display: block;
+  margin-bottom: 0.15in;
+}
 
-.sidebar-header {
-  color: #ff0000; /* red */
+/* Container 1: Update number + Title (no border, aligned with markdown) */
+.update-info-left {
+  padding: 0.12in 0;  /* Top/bottom padding, no left/right to align with markdown */
+  background: #FFFFFF;
+  margin-bottom: 0.08in;  /* Space between containers */
+}
+
+.update-number {
+  font-size: 14pt;
   font-weight: 700;
-  font-size: 13pt;
-  margin: 0.2in 0 0.1in 0;
+  color: #000000;
+  margin-bottom: 0.05in;  /* Reduced spacing */
+  line-height: 1.1;
 }
 
-table.kv {
-  width: var(--sidebar-width);
-  border: 1px solid #D0D0D0;
+.update-title {
+  font-size: 20pt;
+  font-weight: 400;  /* Not bold */
+  color: #000000;
+  line-height: 1.1;  /* Tighter line height */
+  text-transform: uppercase;
+  margin: 0;
+}
+
+/* Container 2: Company info + Prices (no border, aligned with markdown) */
+.update-info-right {
+  padding: 0.12in 0;  /* Top/bottom padding, no left/right to align with markdown */
+  background: #FFFFFF;
+  display: grid;
+  grid-template-columns: 1fr 1fr;  /* Exact 50/50 split */
+  grid-column-gap: 0.3in;
+  align-items: center;
+}
+
+/* Left column of container 2 */
+.update-info-left-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.company-name {
+  font-size: 15pt;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 0.04in;
+  line-height: 1.2;
+}
+
+.publish-info {
+  font-size: 14pt;
+  color: #000000;
+  margin-top: 0.04in;  /* Space after border */
+  margin-bottom: 0.04in;
+  line-height: 1.2;
+}
+
+.init-report-link {
+  display: inline-block !important;
+  font-size: 12pt !important;
+  font-weight: 400 !important;  /* Not bold */
+  color: #ff0000 !important;  /* Red */
+  text-decoration: underline !important;
+  text-transform: uppercase !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  cursor: pointer !important;
+}
+
+/* All link states - keep everything exactly the same */
+.init-report-link:link,
+.init-report-link:visited,
+.init-report-link:hover,
+.init-report-link:active,
+.init-report-link:focus {
+  color: #ff0000 !important;  /* Red */
+  text-decoration: underline !important;
+  font-weight: 400 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  cursor: pointer !important;
+}
+
+/* Price table - right column of container 2 (2 columns, 3 rows) */
+.price-table {
+  width: 100%;
   border-collapse: collapse;
-  background: #FFFFFF;
+  table-layout: fixed;  /* Fixed table layout for consistent columns */
 }
 
-table.kv th {
-  background: #F5F5F5;
-  font-weight: 600;
-  text-align: center;
-  padding: 0.06in;
-  border-right: 1px solid #D0D0D0;
-  border: 1px solid #D0D0D0;
-  vertical-align: middle;
-  font-size: 10pt;
+.price-table colgroup col:first-child {
+  width: 60%;  /* Label column takes 60% */
 }
 
-table.kv td {
-  padding: 0.07in;
-  text-align: center;
-  font-weight: 400;
-  background: #FFFFFF;
-  border: 1px solid #D0D0D0;
-  vertical-align: middle;
-  font-size: 10pt;
+.price-table colgroup col:last-child {
+  width: 40%;  /* Value column takes 40% */
 }
 
-/* Theme table overrides: no borders, no fill, tighter rows */
-table.kv.theme {
+.price-table td {
+  padding: 0.01in 0.08in;  /* Further reduced vertical padding */
+  font-size: 14pt;
   border: none;
-  background: transparent;
+  line-height: 1.1;  /* Further reduced line height */
+  vertical-align: middle;
 }
 
-table.kv.theme th,
-table.kv.theme td {
-  border: none;
-  background: transparent;
-  padding: 0.035in;
-  line-height: 1.0;
+.price-label {
   text-align: left;
-  font-size: 12pt;
+  color: #000000;
+  font-weight: 400;
 }
 
-/* All left column (th) - already bold by default */
-table.kv.theme th {
-  font-weight: 700;
+.price-value {
+  text-align: left;  /* Left aligned */
+  color: #000000;
+  font-weight: 400;  /* Not bold */
 }
 
-/* All right column (td) - make bold */
-table.kv.theme td {
-  font-weight: 700;
+/* Update content area with two columns */
+.update-content {
+  margin-top: 0.2in;
 }
 
-/* First row right column (theme value) - bold + red */
-table.kv.theme td.theme-val {
-  color: #ff0000;
-  font-weight: 700;
-}
-
-
-.chart { width: var(--sidebar-width); height: 1.5in; object-fit: contain; }
-.attribution { text-align: right; font-size: 7pt; margin-top: 0.04in; }
+/* Removed sidebar-specific styles - not needed for Updates */
 
 /* Continuation two columns */
 .md-cont {
@@ -234,15 +297,13 @@ table.kv.theme td.theme-val {
   margin: 0;
 }
 
-/* Symbol logo on last continuation page (bottom right, above footer) */
-/* Logo appears in HTML flow between continuation and disclaimer sections */
-/* Position relative to end of markdown content */
+/* Symbol logo at end of markdown content (stays on same page as markdown) */
 .continuation-logo {
   clear: both;  /* Clear the column layout */
   column-span: all;  /* Span across all columns */
   text-align: right;  /* Align to right */
   padding-right: 0.15in;   /* Space from right edge */
-  margin-top: 0.00in;  /* 3 line spaces after markdown (~0.12in per line) */
+  margin-top: 0.00in;  /* Minimal spacing after markdown */
   page-break-after: always;  /* Force disclaimer to next page */
 }
 .symbol-logo-img {
@@ -252,13 +313,18 @@ table.kv.theme td.theme-val {
   display: inline-block;
 }
 
+/* Updates reports: Title is in containers, not in markdown */
+/* First markdown section also needs two columns */
+.md-first {
+  column-count: 2;
+  column-gap: 0.3in;
+  margin: 0;
+  padding: 0;
+}
+
+/* First markdown element should be styled normally (e.g., KEY POINTS in red) */
 .md-first > *:first-child {
-  font-size: 22pt;        /* Title size for first line of AZEK.md */
-  font-weight: 400;       /* Not bold */
-  line-height: 1.2;
-  margin-bottom: 0.24in;  /* extra space after title */
-  margin-top: 0;          /* ensure it starts flush to align with sidebar */
-  text-align: left;       /* Keep title left-aligned, not justified */
+  margin-top: 0;          /* ensure it starts flush */
 }
 .md img { max-width: 100%; height: auto; break-inside: avoid; }
 .md h1, .md h2, .md h3 { break-after: avoid; break-inside: avoid; margin-top: 0.15in; }
@@ -290,28 +356,7 @@ table.kv.theme td.theme-val {
   line-height: 1;
 }
 
-/* Push sidebar blocks to the right edge of the sidebar column */
-.fp-right .kv.theme,
-.fp-right .kv-company,
-.fp-right .kv-trade,
-.fp-right .chart {
-  width: var(--sidebar-width);
-  margin-left: auto; /* flush right */
-}
-
-/* Company table row height */
-.kv-company th,
-.kv-company td {
-  padding: 0.06in 0.06in;   /* ↓ tighten or ↑ loosen */
-  line-height: 1.50;        /* tweak 0.95–1.2 as needed */
-}
-
-/* Trade table row height */
-.kv-trade th,
-.kv-trade td {
-  padding: 0.06in 0.06in;
-  line-height: 1.50;
-}
+/* Removed sidebar table styles - not needed for Updates */
 
 /* Disclaimer page */
 .disclaimer-page {

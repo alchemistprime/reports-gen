@@ -14,14 +14,15 @@ import pypandoc
 import re
 
 
-def convert_docx_to_markdown(docx_path: str, ticker: str = None, output_dir: str = None) -> str:
+def convert_docx_to_markdown(docx_path: str, ticker: str = None, output_dir: str = None, report_type: str = 'Initiation') -> str:
     """
     Convert a DOCX file to Markdown while extracting images.
     
     Args:
         docx_path: Path to the input DOCX file
         ticker: Ticker symbol (e.g., 'AZEK') for organizing files
-        output_dir: Directory to save the markdown file (defaults to Tickers/{ticker}/)
+        output_dir: Directory to save the markdown file (defaults to Tickers/{ticker}/{report_type}/)
+        report_type: Report type folder ('Initiation' or 'Updates')
     
     Returns:
         Path to the created markdown file
@@ -38,9 +39,9 @@ def convert_docx_to_markdown(docx_path: str, ticker: str = None, output_dir: str
     if ticker is None:
         ticker = docx_path.stem
     
-    # Set output directory to Tickers/{ticker}/ by default
+    # Set output directory to Tickers/{ticker}/{report_type}/ by default
     if output_dir is None:
-        output_dir = Path("Tickers") / ticker
+        output_dir = Path("Tickers") / ticker / report_type
     else:
         output_dir = Path(output_dir)
     
@@ -75,8 +76,16 @@ def convert_docx_to_markdown(docx_path: str, ticker: str = None, output_dir: str
         # Pandoc extracts images to {extract_path}/media/ but we want them referenced as images/
         markdown_content = fix_image_paths(markdown_content)
         
-        # Add section spacing (two blank lines before bold headings, except the first)
-        markdown_content = add_section_spacing(markdown_content)
+        # Unescape dollar signs that pandoc escaped (prevents \$ from appearing in PDFs)
+        markdown_content = unescape_dollar_signs(markdown_content)
+        
+        # Convert pandoc superscript syntax ^text^ to HTML <sup>text</sup>
+        markdown_content = convert_superscripts(markdown_content)
+        
+        # NOTE: Section spacing code disabled - see commented function below
+        # This previously added two blank lines before bold headings (except first)
+        # Disabled to preserve natural spacing from DOCX conversion
+        # markdown_content = add_section_spacing(markdown_content)
         
         # Move images from media/ subdirectory to the images/ directory
         move_images_from_media_dir(images_dir)
@@ -122,44 +131,92 @@ def fix_image_paths(markdown_content: str) -> str:
     return re.sub(image_pattern, replace_image_path, markdown_content)
 
 
-def add_section_spacing(markdown_content: str) -> str:
-    """
-    Add extra blank lines before bold section headings.
-    Exception: First **TEXT** section (KEY POINTS) gets no extra spacing.
-    """
-    lines = markdown_content.split('\n')
-    result = []
-    first_bold_heading = True
+def unescape_dollar_signs(markdown_content: str) -> str:
+    r"""
+    Remove backslash escaping from dollar signs.
     
-    for i, line in enumerate(lines):
-        stripped = line.strip()
-        
-        # Check if this is a bold heading (starts and ends with **)
-        is_bold_heading = (
-            stripped.startswith('**') and 
-            stripped.endswith('**') and 
-            len(stripped) > 4  # More than just '****'
-        )
-        
-        if is_bold_heading:
-            if first_bold_heading:
-                # First bold heading - no extra spacing
-                first_bold_heading = False
-                result.append(line)
-            else:
-                # Subsequent bold headings - add two blank lines before
-                # Remove any existing blank lines before this heading
-                while result and result[-1].strip() == '':
-                    result.pop()
-                
-                # Add exactly two blank lines
-                result.append('')
-                result.append('')
-                result.append(line)
-        else:
-            result.append(line)
+    Pandoc escapes $ as \$ to prevent math syntax interpretation,
+    but this causes issues in PDF rendering. This function unescapes them.
+    """
+    # Replace \$ with $ (remove the escape sequence)
+    return markdown_content.replace(r'\$', '$')
+
+
+def convert_superscripts(markdown_content: str) -> str:
+    """
+    Convert pandoc superscript syntax ^text^ to HTML <sup>text</sup>.
     
-    return '\n'.join(result)
+    Pandoc uses ^text^ for superscripts, but Python markdown library doesn't
+    support this syntax. Convert to HTML sup tags for proper rendering.
+    """
+    # Replace ^text^ with <sup>text</sup>
+    # Match ^ followed by 1-3 characters followed by ^
+    # This handles common cases like ^th^, ^st^, ^nd^, ^rd^, etc.
+    return re.sub(r'\^([^\^]{1,3})\^', r'<sup>\1</sup>', markdown_content)
+
+
+# ==============================================================================
+# DISABLED: Section Spacing Function
+# ==============================================================================
+# This function was previously used to add two blank lines before bold headings
+# in the markdown output (e.g., before **PREMISE OF THE SHORT**, **COMPANY DESCRIPTION**, etc.)
+# 
+# REASON FOR DISABLING:
+# - Decision made to preserve natural spacing from DOCX conversion
+# - Spacing is now handled by CSS in the PDF generation step (see style_bold_headings 
+#   in src/generate_report.py which adds margin-top to bold headings)
+# 
+# HOW IT WORKED:
+# - Detected lines that start and end with ** (bold headings)
+# - Removed any existing blank lines before the heading
+# - Added exactly 2 blank lines before each bold heading
+# - Exception: First bold heading (KEY POINTS) received no extra spacing
+# 
+# TO RE-ENABLE:
+# - Uncomment this function and the call on line ~81 above
+# - Consider whether CSS styling in generate_report.py should also be adjusted
+# 
+# LAST ACTIVE: 2025-01-06
+# ==============================================================================
+
+# def add_section_spacing(markdown_content: str) -> str:
+#     """
+#     Add extra blank lines before bold section headings.
+#     Exception: First **TEXT** section (KEY POINTS) gets no extra spacing.
+#     """
+#     lines = markdown_content.split('\n')
+#     result = []
+#     first_bold_heading = True
+#     
+#     for i, line in enumerate(lines):
+#         stripped = line.strip()
+#         
+#         # Check if this is a bold heading (starts and ends with **)
+#         is_bold_heading = (
+#             stripped.startswith('**') and 
+#             stripped.endswith('**') and 
+#             len(stripped) > 4  # More than just '****'
+#         )
+#         
+#         if is_bold_heading:
+#             if first_bold_heading:
+#                 # First bold heading - no extra spacing
+#                 first_bold_heading = False
+#                 result.append(line)
+#             else:
+#                 # Subsequent bold headings - add two blank lines before
+#                 # Remove any existing blank lines before this heading
+#                 while result and result[-1].strip() == '':
+#                     result.pop()
+#                 
+#                 # Add exactly two blank lines
+#                 result.append('')
+#                 result.append('')
+#                 result.append(line)
+#         else:
+#             result.append(line)
+#     
+#     return '\n'.join(result)
 
 
 def move_images_from_media_dir(images_dir: Path):
@@ -200,16 +257,18 @@ def move_images_from_media_dir(images_dir: Path):
 @click.argument('docx_file', type=click.Path(exists=True, path_type=Path))
 @click.option('--ticker', '-t', type=str, 
               help='Ticker symbol (e.g., AZEK). If not provided, uses the filename stem.')
+@click.option('--report-type', '-r', type=click.Choice(['Initiation', 'Updates']), default='Initiation',
+              help='Report type: Initiation or Updates (default: Initiation)')
 @click.option('--output-dir', '-o', type=click.Path(path_type=Path), 
-              help='Output directory for the markdown file (defaults to Tickers/{ticker}/)')
+              help='Output directory for the markdown file (defaults to Tickers/{ticker}/{report_type}/)')
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose output')
-def main(docx_file: Path, ticker: str = None, output_dir: Path = None, verbose: bool = False):
+def main(docx_file: Path, ticker: str = None, report_type: str = 'Initiation', output_dir: Path = None, verbose: bool = False):
     """
     Convert a DOCX file to Markdown format while extracting and preserving images.
     
     DOCX_FILE: Path to the input DOCX file
     
-    Images are extracted to Tickers/{ticker}/images/ and markdown is saved to Tickers/{ticker}/{ticker}.md
+    Images are extracted to Tickers/{ticker}/{report_type}/images/ and markdown is saved to Tickers/{ticker}/{report_type}/{ticker}.md
     """
     # Determine ticker from filename if not provided
     if ticker is None:
@@ -220,14 +279,15 @@ def main(docx_file: Path, ticker: str = None, output_dir: Path = None, verbose: 
     if verbose:
         print(f"🔄 Converting {docx_file} to Markdown...")
         print(f"📂 Ticker: {ticker}")
-        print(f"📂 Output directory: {output_dir or f'Tickers/{ticker}/'}")
+        print(f"📂 Report type: {report_type}")
+        print(f"📂 Output directory: {output_dir or f'Tickers/{ticker}/{report_type}/'}")
     
     try:
         # Check if pandoc is available
         pypandoc.get_pandoc_version()
         
         # Convert the file
-        markdown_path = convert_docx_to_markdown(docx_file, ticker=ticker, output_dir=output_dir)
+        markdown_path = convert_docx_to_markdown(docx_file, ticker=ticker, output_dir=output_dir, report_type=report_type)
         
         if verbose:
             print(f"📄 Markdown file created: {markdown_path}")
