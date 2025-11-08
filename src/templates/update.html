@@ -115,6 +115,15 @@
     {% endif %}
   </section>
 
+  <!-- Appendix section (optional, full-width) -->
+  {% if has_appendix %}
+  <section class="appendix-page">
+    <div class="appendix-content">
+      {{ appendix_html | safe }}
+    </div>
+  </section>
+  {% endif %}
+
   <!-- Disclaimer page -->
   <section class="disclaimer-page">
     <h1 class="disclaimer-title">DISCLAIMER</h1>

@@ -360,13 +360,51 @@ def load_update_config(ticker_dir: Path, ticker: str) -> Dict[str, Any]:
         return {}
 
 
-def load_markdown_with_front_matter(md_path: Path, project_root: Path, max_height_inches: float = 9.5) -> Tuple[Dict[str, Any], str, str]:
+def extract_appendix(markdown_content: str) -> Tuple[str, str, bool]:
+    """
+    Extract appendix content from markdown based on a simple marker.
+    
+    If <!-- APPENDIX --> is found, everything after it becomes the appendix.
+    If not found, there is no appendix.
+    
+    Returns:
+        (main_content, appendix_content, has_appendix)
+    """
+    # Look for <!-- APPENDIX --> marker (case-insensitive)
+    appendix_marker = r'<!--\s*APPENDIX\s*-->'
+    
+    # Split on the marker
+    parts = re.split(appendix_marker, markdown_content, maxsplit=1, flags=re.IGNORECASE)
+    
+    if len(parts) < 2:
+        # No appendix marker found - all content is main content
+        return (markdown_content, "", False)
+    
+    # Split found - first part is main content, second part is appendix
+    main_content = parts[0].strip()
+    appendix_content = parts[1].strip()
+    
+    return (main_content, appendix_content, True)
+
+
+def style_appendix_title(html: str) -> str:
+    """Style first paragraph of appendix as 33pt title"""
+    # Match first <p>...</p>
+    pattern = r'^(<p>)(.*?)(</p>)'
+    replacement = r'<p style="font-size: 33pt; font-weight: 400; color: #000000; margin-bottom: 0.2in;">\2</p>'
+    return re.sub(pattern, replacement, html, count=1, flags=re.DOTALL)
+
+
+def load_markdown_with_front_matter(md_path: Path, project_root: Path, max_height_inches: float = 9.5) -> Tuple[Dict[str, Any], str, str, str, bool]:
     post = frontmatter.load(md_path)
     meta = dict(post.metadata or {})
     
-    # HEIGHT-BASED SPLIT instead of line count
+    # Extract appendix content if present (before height-based splitting)
+    main_content, appendix_content, has_appendix = extract_appendix(post.content)
+    
+    # HEIGHT-BASED SPLIT of main content only (not appendix)
     first_md, rest_md = split_markdown_by_height(
-        post.content,
+        main_content,
         max_height_inches=max_height_inches,
         project_root=project_root
     )
@@ -382,7 +420,13 @@ def load_markdown_with_front_matter(md_path: Path, project_root: Path, max_heigh
     rest_html = style_exhibit_source_lines(rest_html)
     rest_html = style_bold_headings(rest_html, first_page=False)
     
-    return meta, first_html, rest_html
+    # Process appendix if present
+    appendix_html = ""
+    if has_appendix and appendix_content:
+        appendix_html = md_to_html(appendix_content)
+        appendix_html = style_appendix_title(appendix_html)
+    
+    return meta, first_html, rest_html, appendix_html, has_appendix
 
 
 def render_pdf(
@@ -407,7 +451,7 @@ def render_pdf(
     if not md_path.exists():
         raise FileNotFoundError(f"Markdown file not found: {md_path}")
 
-    meta, first_html, rest_html = load_markdown_with_front_matter(md_path, project_root, max_height_inches)
+    meta, first_html, rest_html, appendix_html, has_appendix = load_markdown_with_front_matter(md_path, project_root, max_height_inches)
 
     # Load disclaimer markdown
     disclaimer_path = project_root / 'assets' / 'Base' / 'disclaimer.md'
@@ -473,6 +517,8 @@ def render_pdf(
     html_str = template.render(
         md_first_html=first_html,
         md_cont_html=rest_html,
+        appendix_html=appendix_html,
+        has_appendix=has_appendix,
         disclaimer_html=disclaimer_html,
         **data
     )
