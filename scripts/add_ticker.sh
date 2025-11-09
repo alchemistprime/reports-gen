@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Add New Ticker Script
-# Creates directory structure for a new ticker with Initiation and Updates folders
+# Creates directory structure for a new ticker with Initiating and Update folders
 #
 # Usage:
 #   ./scripts/add_ticker.sh TICKER
@@ -31,8 +31,8 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Define paths
 TICKER_DIR="$PROJECT_ROOT/Tickers/$TICKER"
-INITIATION_DIR="$TICKER_DIR/Initiation"
-UPDATES_DIR="$TICKER_DIR/Updates"
+INITIATION_DIR="$TICKER_DIR/Initiating"
+UPDATES_DIR="$TICKER_DIR/Update"
 
 echo ""
 echo "============================================================"
@@ -66,9 +66,9 @@ echo ""
 # Create template config files
 echo "📝 Creating template configuration files..."
 
-# Initiation config template
+# Initiating config template
 cat > "$INITIATION_DIR/${TICKER}_config.yaml" << EOF
-# ${TICKER} Initiation Report Configuration
+# ${TICKER} Initiating Report Configuration
 
 # Report metadata
 issue_number: '00'
@@ -105,11 +105,11 @@ trade_data:
   BORROW COST: '0.0%'
 EOF
 
-echo "✅ Created: ${TICKER}_config.yaml (Initiation)"
+echo "✅ Created: ${TICKER}_config.yaml (Initiating)"
 
-# Updates config template
+# Update config template
 cat > "$UPDATES_DIR/${TICKER}_updateconfig.yaml" << EOF
-# ${TICKER} Updates Report Configuration
+# ${TICKER} Update Report Configuration
 
 # Report identification
 issue_number: "00"
@@ -131,7 +131,7 @@ recent_price: "0.00"
 target_price: "0.00"
 EOF
 
-echo "✅ Created: ${TICKER}_updateconfig.yaml (Updates)"
+echo "✅ Created: ${TICKER}_updateconfig.yaml (Update)"
 echo ""
 
 # Summary
@@ -141,16 +141,16 @@ echo "============================================================"
 echo ""
 echo "Next steps:"
 echo ""
-echo "1. Initiation Report:"
+echo "1. Initiating Report:"
 echo "   • Place DOCX file: $INITIATION_DIR/${TICKER}.docx"
 echo "   • Edit config: $INITIATION_DIR/${TICKER}_config.yaml"
 echo "   • Add chart: $INITIATION_DIR/${TICKER}_chart.png"
 echo "   • Run: uv run src/process_ticker.py $TICKER"
 echo ""
-echo "2. Updates Report:"
+echo "2. Update Report:"
 echo "   • Place DOCX file: $UPDATES_DIR/${TICKER}.docx"
 echo "   • Edit config: $UPDATES_DIR/${TICKER}_updateconfig.yaml"
-echo "   • Run: uv run src/process_ticker.py $TICKER --report-type Updates"
+echo "   • Run: uv run src/process_ticker.py $TICKER --report-type Update"
 echo ""
 
 

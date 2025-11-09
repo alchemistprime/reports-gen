@@ -14,7 +14,7 @@ import pypandoc
 import re
 
 
-def convert_docx_to_markdown(docx_path: str, ticker: str = None, output_dir: str = None, report_type: str = 'Initiation') -> str:
+def convert_docx_to_markdown(docx_path: str, ticker: str = None, output_dir: str = None, report_type: str = 'Initiating') -> str:
     """
     Convert a DOCX file to Markdown while extracting images.
     
@@ -22,7 +22,7 @@ def convert_docx_to_markdown(docx_path: str, ticker: str = None, output_dir: str
         docx_path: Path to the input DOCX file
         ticker: Ticker symbol (e.g., 'AZEK') for organizing files
         output_dir: Directory to save the markdown file (defaults to Tickers/{ticker}/{report_type}/)
-        report_type: Report type folder ('Initiation' or 'Updates')
+        report_type: Report type folder ('Initiating' or 'Update')
     
     Returns:
         Path to the created markdown file
@@ -81,6 +81,9 @@ def convert_docx_to_markdown(docx_path: str, ticker: str = None, output_dir: str
         
         # Convert pandoc superscript syntax ^text^ to HTML <sup>text</sup>
         markdown_content = convert_superscripts(markdown_content)
+        
+        # Bold all-caps headings that pandoc didn't mark as bold
+        markdown_content = bold_all_caps_headings(markdown_content)
         
         # NOTE: Section spacing code disabled - see commented function below
         # This previously added two blank lines before bold headings (except first)
@@ -153,6 +156,51 @@ def convert_superscripts(markdown_content: str) -> str:
     # Match ^ followed by 1-3 characters followed by ^
     # This handles common cases like ^th^, ^st^, ^nd^, ^rd^, etc.
     return re.sub(r'\^([^\^]{1,3})\^', r'<sup>\1</sup>', markdown_content)
+
+
+def bold_all_caps_headings(markdown_content: str) -> str:
+    """
+    Convert standalone all-caps lines to bold markdown format.
+    
+    In DOCX files, section headings are often styled as bold all-caps text.
+    Pandoc sometimes converts these as plain text. This function detects
+    standalone all-caps lines and wraps them in ** to make them bold.
+    
+    Args:
+        markdown_content: Markdown text
+    
+    Returns:
+        Markdown with all-caps lines bolded
+    """
+    lines = markdown_content.split('\n')
+    result = []
+    
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        
+        # Check if this is an all-caps line (at least 2 words, all uppercase letters/spaces)
+        # Must be standalone (surrounded by blank lines or start/end of content)
+        # Must not already be bold (no ** markers)
+        if (stripped and 
+            len(stripped.split()) >= 2 and 
+            stripped.replace(' ', '').replace('-', '').isalpha() and
+            stripped.isupper() and 
+            not stripped.startswith('**') and
+            not stripped.startswith('#') and
+            not stripped.startswith('-') and
+            not stripped.startswith('*')):
+            
+            # Check if it's standalone (surrounded by empty lines)
+            prev_empty = (i == 0) or (not lines[i-1].strip())
+            next_empty = (i == len(lines)-1) or (not lines[i+1].strip())
+            
+            if prev_empty and next_empty:
+                result.append(f'**{stripped}**')
+                continue
+        
+        result.append(line)
+    
+    return '\n'.join(result)
 
 
 # ==============================================================================
@@ -257,12 +305,12 @@ def move_images_from_media_dir(images_dir: Path):
 @click.argument('docx_file', type=click.Path(exists=True, path_type=Path))
 @click.option('--ticker', '-t', type=str, 
               help='Ticker symbol (e.g., AZEK). If not provided, uses the filename stem.')
-@click.option('--report-type', '-r', type=click.Choice(['Initiation', 'Updates']), default='Initiation',
-              help='Report type: Initiation or Updates (default: Initiation)')
+@click.option('--report-type', '-r', type=click.Choice(['Initiating', 'Update']), default='Initiating',
+              help='Report type: Initiating or Update (default: Initiating)')
 @click.option('--output-dir', '-o', type=click.Path(path_type=Path), 
               help='Output directory for the markdown file (defaults to Tickers/{ticker}/{report_type}/)')
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose output')
-def main(docx_file: Path, ticker: str = None, report_type: str = 'Initiation', output_dir: Path = None, verbose: bool = False):
+def main(docx_file: Path, ticker: str = None, report_type: str = 'Initiating', output_dir: Path = None, verbose: bool = False):
     """
     Convert a DOCX file to Markdown format while extracting and preserving images.
     

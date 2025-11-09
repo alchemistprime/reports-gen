@@ -37,6 +37,13 @@ except ImportError:
 # ============================================================================
 
 INITIATION_FIELDS = {
+    'ticker': {
+        'prompt': 'Ticker with Exchange',
+        'required': True,
+        'type': 'ticker',
+        'example': 'AAPL',
+        'description': 'Stock ticker with exchange suffix (saved as ticker in YAML)'
+    },
     'issue_number': {
         'prompt': 'Issue Number',
         'required': True,
@@ -65,12 +72,12 @@ INITIATION_FIELDS = {
         'example': 'INVENTORY GLUT',
         'description': 'Main investment theme (all caps recommended)'
     },
-    'ticker': {
-        'prompt': 'Ticker with Exchange',
-        'required': True,
-        'type': 'ticker',
+    'target': {
+        'prompt': 'Target (additional field)',
+        'required': False,
+        'type': 'str',
         'example': 'AAPL:US',
-        'description': 'Stock ticker with exchange suffix'
+        'description': 'Ticker target and Market location'
     },
     'timeframe': {
         'prompt': 'Timeframe',
@@ -100,8 +107,8 @@ COMPANY_FIELDS = {
     'LOCATION': {'example': 'United States', 'description': 'Headquarters location'},
     'MARKET CAP': {'example': '$2.5T', 'description': 'Market capitalization'},
     'EV/EBITDA': {'example': '25.5', 'description': 'Enterprise value to EBITDA ratio'},
-    'TRAILING P/E': {'example': '30.2', 'description': 'Trailing price-to-earnings ratio'},
-    'PROFIT MARGIN': {'example': '25.3%', 'description': 'Net profit margin'},
+    'TRAILING P/E': {'example': '30.2', 'description': 'Price-to-earnings ratio trailing'},
+    'PROFIT MARGIN': {'example': '25.3%', 'description': 'Profit margin'},
     'TOTAL CASH/DEBT': {'example': '$100B / $50B', 'description': 'Total cash / Total debt'},
     '52 WEEK RANGE': {'example': '$100.00 - $200.00', 'description': '52-week price range'}
 }
@@ -488,34 +495,6 @@ def create_initiation_config(ticker: str, existing_config: Dict[str, Any] = None
             trade_data[field_name] = value
     config['trade_data'] = trade_data
     
-    # Report saving
-    print_section("Report Saving Convention")
-    report_saving = {}
-    current_saving = current.get('report_saving', {})
-    
-    # Ticker (default to uppercase ticker symbol without exchange)
-    ticker_symbol = config.get('ticker', ticker).split(':')[0].upper()
-    current_ticker = current_saving.get('ticker', ticker_symbol)
-    print_info("Report filename ticker (usually just the symbol)")
-    value = prompt_field('ticker', {'prompt': 'Filename Ticker', 'required': True}, current_ticker)
-    report_saving['ticker'] = value
-    
-    # Issue (format: IssueXX)
-    issue_num = config.get('issue_number', '')
-    default_issue = f"Issue{issue_num}" if issue_num else current_saving.get('issue', '')
-    print_info("Format: IssueXX")
-    value = prompt_field('issue', {'prompt': 'Filename Issue', 'required': True}, default_issue)
-    report_saving['issue'] = value
-    
-    # Date (format: MMDDYYYY - no periods)
-    report_date = config.get('date', '')
-    default_date = report_date.replace('.', '') if report_date else current_saving.get('date', '')
-    print_info("Format: MMDDYYYY (no periods)")
-    value = prompt_field('date', {'prompt': 'Filename Date', 'required': True}, default_date)
-    report_saving['date'] = value
-    
-    config['report_saving'] = report_saving
-    
     return config
 
 
@@ -560,8 +539,8 @@ Examples:
     parser.add_argument('ticker', type=str, 
                        help='Ticker symbol (e.g., AZEK, AAPL)')
     parser.add_argument('--type', '-t', type=str, required=True,
-                       choices=['Initiation', 'Updates'],
-                       help='Report type: Initiation or Updates')
+                       choices=['Initiating', 'Update'],
+                       help='Report type: Initiating or Update')
     parser.add_argument('--edit', '-e', action='store_true',
                        help='Edit existing config instead of creating new')
     
@@ -575,7 +554,7 @@ Examples:
     project_root = Path(__file__).parent.parent
     ticker_dir = project_root / 'Tickers' / ticker / report_type
     
-    if report_type == 'Initiation':
+    if report_type == 'Initiating':
         config_file = ticker_dir / f'{ticker}_config.yaml'
     else:
         config_file = ticker_dir / f'{ticker}_updateconfig.yaml'
@@ -598,7 +577,7 @@ Examples:
         print()
     
     # Create config based on type
-    if report_type == 'Initiation':
+    if report_type == 'Initiating':
         config = create_initiation_config(ticker, existing_config)
     else:
         config = create_updates_config(ticker, existing_config)

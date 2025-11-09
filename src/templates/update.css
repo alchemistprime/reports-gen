@@ -127,7 +127,7 @@
 .sep { color: #666; padding: 0 0.1in; }
 .page-number::before { content: counter(page); }
 
-/* First page layout for Updates */
+/* First page layout for Update */
 .first-page {
   page-break-after: always;
   margin-top: 0.10in;  /* Spacing below header */
@@ -272,7 +272,7 @@
   margin-top: 0.2in;
 }
 
-/* Removed sidebar-specific styles - not needed for Updates */
+/* Removed sidebar-specific styles - not needed for Update */
 
 /* Continuation two columns */
 .md-cont {
@@ -313,7 +313,7 @@
   display: inline-block;
 }
 
-/* Updates reports: Title is in containers, not in markdown */
+/* Update reports: Title is in containers, not in markdown */
 /* First markdown section also needs two columns */
 .md-first {
   column-count: 2;
@@ -356,7 +356,7 @@
   line-height: 1;
 }
 
-/* Removed sidebar table styles - not needed for Updates */
+/* Removed sidebar table styles - not needed for Update */
 
 /* Appendix page - full width, regular styling */
 .appendix-page {

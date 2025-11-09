@@ -2,11 +2,11 @@
 # This file contains ticker-specific metadata for report generation
 
 # Report metadata
+ticker: 'AZEK:US'
 issue_number: '37'
 date: '02.20.2025'
 table_date: '02.19.2025'  # Date for table data (may differ from report date)
 theme: 'INVENTORY GLUT'
-ticker: 'AZEK:US'
 timeframe: '6-9 MONTHS'
 current_target: '$49.90 | $30.00'
 downside: '39.9%'
@@ -28,11 +28,4 @@ trade_data:
   DAYS TO COVER: '3.26'
   SHARES SHORT: '3.33%'
   BORROW COST: '0.3%'
-
-# Report saving naming convention
-# ticker.issue.date.pdf
-report_saving:
-  ticker: 'AZEK'
-  issue: 'Issue37'
-  date: '02202025'
   

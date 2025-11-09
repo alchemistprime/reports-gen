@@ -67,8 +67,8 @@ def run_command(cmd: list[str], description: str) -> bool:
 
 @click.command()
 @click.argument('ticker', type=str)
-@click.option('--report-type', '-r', type=click.Choice(['Initiation', 'Updates']), default='Initiation',
-              help='Report type: Initiation or Updates (default: Initiation)')
+@click.option('--report-type', '-r', type=click.Choice(['Initiating', 'Update']), default='Initiating',
+              help='Report type: Initiating or Update (default: Initiating)')
 @click.option('--skip-conversion', is_flag=True, 
               help='Skip DOCX to Markdown conversion (use existing markdown)')
 @click.option('--skip-pdf', is_flag=True,

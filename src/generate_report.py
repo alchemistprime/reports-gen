@@ -261,7 +261,7 @@ def style_bold_headings(html: str, first_page: bool = False) -> str:
     """Style KEY POINTS heading on first page only (red, 13pt, bold)"""
     # NOTE: Previously this function added margin-top: 0.35in to all bold headings
     # This was disabled 2025-01-06 to preserve natural spacing from markdown
-    # Now only styles KEY POINTS on first page to match sidebar headers
+    # Now only styles KEY POINTS on first page to match sidebar headers (red color)
     
     # Match <p><strong>TEXT</strong></p> - paragraphs containing only bold text
     pattern = r'<p><strong>(.*?)</strong></p>'
@@ -280,8 +280,8 @@ def style_bold_headings(html: str, first_page: bool = False) -> str:
         bold_text = match.group(1)
         
         if first_page and actual_index == 0:
-            # First bold heading on first page (KEY POINTS): black, 13pt, bold
-            styled = f'<p style="color: #000000; font-size: 13pt; font-weight: 700;"><strong>{bold_text}</strong></p>'
+            # First bold heading on first page (KEY POINTS): red, 13pt, bold (matches sidebar headers)
+            styled = f'<p style="color: #ff0000; font-size: 13pt; font-weight: 700;"><strong>{bold_text}</strong></p>'
         else:
             # All other bold headings: no styling, use natural spacing
             # Previous behavior: styled = f'<p style="margin-top: 0.35in;"><strong>{bold_text}</strong></p>'
@@ -395,6 +395,16 @@ def style_appendix_title(html: str) -> str:
     return re.sub(pattern, replacement, html, count=1, flags=re.DOTALL)
 
 
+def format_table_date(date_str: str) -> str:
+    """
+    Format table_date from config format (MM.DD.YYYY) to display format (MM/DD/YYYY).
+    Simply replaces periods with slashes.
+    """
+    if date_str and isinstance(date_str, str):
+        return date_str.replace('.', '/')
+    return date_str
+
+
 def load_markdown_with_front_matter(md_path: Path, project_root: Path, max_height_inches: float = 9.5) -> Tuple[Dict[str, Any], str, str, str, bool]:
     post = frontmatter.load(md_path)
     meta = dict(post.metadata or {})
@@ -434,7 +444,7 @@ def render_pdf(
     markdown_file: str = None,
     output_file: str = None,
     max_height_inches: float = 9.5,
-    report_type: str = 'Initiation',  # 'Initiation' or 'Updates'
+    report_type: str = 'Initiating',  # 'Initiating' or 'Update'
 ) -> str:
     project_root = Path(__file__).parent.parent  # Go up from src/ to project root
     templates_dir = Path(__file__).parent / 'templates'  # Templates are in src/templates/
@@ -468,10 +478,10 @@ def render_pdf(
     base_url = str(ticker_dir) if ticker_dir.exists() else str(project_root)
     
     # Load configuration based on report type
-    if report_type == 'Updates':
+    if report_type == 'Update':
         ticker_config = load_update_config(ticker_dir, ticker) if ticker_dir.exists() else {}
     else:
-        # Initiation reports use standard config
+        # Initiating reports use standard config
         ticker_config = load_ticker_config(ticker_dir, ticker) if ticker_dir.exists() else {}
     
     # Resolve chart image: ticker-specific only, in report type folder
@@ -498,6 +508,10 @@ def render_pdf(
 
     # Configuration priority: global_defaults → ticker_config → front_matter
     data = {**global_defaults, **ticker_config, **meta}
+    
+    # Format table_date for display (MM.DD.YYYY → MM/DD/YYYY)
+    if 'table_date' in data:
+        data['table_date'] = format_table_date(data['table_date'])
 
     # Jinja environment
     env = Environment(
@@ -506,11 +520,11 @@ def render_pdf(
     )
     
     # Select template and CSS based on report type
-    if report_type == 'Updates':
+    if report_type == 'Update':
         template = env.get_template('update.html')
         css_path = str(templates_dir / 'update.css')
     else:
-        # Initiation reports use standard template
+        # Initiating reports use standard template
         template = env.get_template('report.html')
         css_path = str(templates_dir / 'report.css')
 
@@ -525,19 +539,20 @@ def render_pdf(
     
     # If output_file not specified, use ticker-based path in report type folder
     if output_file is None:
-        if report_type == 'Updates':
-            # Updates filename format: {ticker}.Issue{issue_number}.Update{update_number}.{date}.pdf
+        if report_type == 'Update':
+            # Update filename format: {ticker}.Issue{issue_number}.Update{update_number}.{date}.pdf
             # Remove periods from date for filename (11.07.2025 -> 1172025)
             date_str = data.get('date', 'MMDDYYYY').replace('.', '')
             filename = f"{data.get('ticker', ticker)}.Issue{data.get('issue_number', '00')}.Update{data.get('update_number', '00')}.{date_str}.pdf"
         else:
-            # Initiation reports use report_saving config or default
-            if 'report_saving' in data:
-                rs = data['report_saving']
-                filename = f"{rs['ticker']}.{rs['issue']}.{rs['date']}.pdf"
-            else:
-                # Fall back to default convention
-                filename = f'{ticker}_report.pdf'
+            # Initiating reports: auto-generate filename from ticker, issue_number, date
+            # Extract ticker symbol (without exchange, e.g., "AZEK:US" → "AZEK")
+            ticker_symbol = data.get('ticker', ticker).split(':')[0].upper()
+            # Format issue as Issue{issue_number}
+            issue_str = f"Issue{data.get('issue_number', '00')}"
+            # Format date by removing periods (e.g., "02.20.2025" → "02202025")
+            date_str = data.get('date', 'MMDDYYYY').replace('.', '')
+            filename = f"{ticker_symbol}.{issue_str}.{date_str}.pdf"
         
         output_path = ticker_dir / filename  # Save to report type folder
     else:
@@ -559,9 +574,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate PDF report from markdown file')
     parser.add_argument('--ticker', '-t', type=str, default='AZEK',
                         help='Ticker symbol (e.g., AZEK)')
-    parser.add_argument('--report-type', '-r', type=str, default='Initiation',
-                        choices=['Initiation', 'Updates'],
-                        help='Report type: Initiation or Updates (default: Initiation)')
+    parser.add_argument('--report-type', '-r', type=str, default='Initiating',
+                        choices=['Initiating', 'Update'],
+                        help='Report type: Initiating or Update (default: Initiating)')
     parser.add_argument('--markdown', '-m', type=str, default=None,
                         help='Path to markdown file (defaults to Tickers/{ticker}/{report_type}/{ticker}.md)')
     parser.add_argument('--output', '-o', type=str, default=None,
