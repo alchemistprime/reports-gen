@@ -87,7 +87,13 @@ def main(ticker: str, report_type: str, skip_conversion: bool, skip_pdf: bool, m
     
     # Define paths with report type subfolder
     ticker_dir = project_root / 'Tickers' / ticker / report_type
-    docx_file = ticker_dir / f'{ticker}.docx'
+    
+    # Update reports use {TICKER}_update.docx naming convention
+    if report_type == 'Update':
+        docx_file = ticker_dir / f'{ticker}_update.docx'
+    else:
+        docx_file = ticker_dir / f'{ticker}.docx'
+    
     markdown_file = ticker_dir / f'{ticker}.md'
     pdf_filename = get_pdf_filename(ticker, ticker_dir)
     pdf_file = ticker_dir / pdf_filename
@@ -105,7 +111,8 @@ def main(ticker: str, report_type: str, skip_conversion: bool, skip_pdf: bool, m
         # Check if DOCX file exists
         if not docx_file.exists():
             print(f"\n❌ Error: DOCX file not found: {docx_file}")
-            print(f"💡 Please place {ticker}.docx in {ticker_dir}")
+            docx_filename = f'{ticker}_update.docx' if report_type == 'Update' else f'{ticker}.docx'
+            print(f"💡 Please place {docx_filename} in {ticker_dir}")
             sys.exit(1)
         
         # Run conversion
@@ -119,7 +126,8 @@ def main(ticker: str, report_type: str, skip_conversion: bool, skip_pdf: bool, m
         if verbose:
             cmd.append('--verbose')
         
-        if not run_command(cmd, f"Converting {ticker}.docx to Markdown"):
+        docx_display = f'{ticker}_update.docx' if report_type == 'Update' else f'{ticker}.docx'
+        if not run_command(cmd, f"Converting {docx_display} to Markdown"):
             sys.exit(1)
     else:
         print(f"\n⏭️  Skipping DOCX conversion")

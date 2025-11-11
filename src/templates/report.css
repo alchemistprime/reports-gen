@@ -234,29 +234,13 @@ table.kv.theme td.theme-val {
   margin: 0;
 }
 
-/* Symbol logo on last continuation page (bottom right, above footer) */
-/* Logo appears in HTML flow between continuation and disclaimer sections */
-/* Position relative to end of markdown content */
-.continuation-logo {
-  clear: both;  /* Clear the column layout */
-  column-span: all;  /* Span across all columns */
-  text-align: right;  /* Align to right */
-  padding-right: 0.15in;   /* Space from right edge */
-  margin-top: -1.1in;  /* Cancel last paragraph's margin-bottom for tight spacing */
-  page-break-after: always;  /* Force disclaimer to next page */
-}
-.symbol-logo-img {
-  width: 0.25in;  /* 50% smaller (was 0.85in) */
-  height: auto;
-  object-fit: contain;
-  display: inline-block;
-}
+/* Symbol logo is now embedded inline in markdown HTML (no separate div needed) */
 
 .md-first > *:first-child {
   font-size: 22pt;        /* Title size for first line of AZEK.md */
   font-weight: 400;       /* Not bold */
   line-height: 1.2;
-  margin-bottom: 0.24in;  /* extra space after title */
+  margin-bottom: 0.65in;  /* extra space after title */
   margin-top: 0;          /* ensure it starts flush to align with sidebar */
   text-align: left;       /* Keep title left-aligned, not justified */
 }

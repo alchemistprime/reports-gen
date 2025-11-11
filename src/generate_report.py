@@ -257,11 +257,17 @@ def style_exhibit_source_lines(html: str) -> str:
     return re.sub(pattern, replacement, html, flags=re.IGNORECASE)
 
 
-def style_bold_headings(html: str, first_page: bool = False) -> str:
-    """Style KEY POINTS heading on first page only (red, 13pt, bold)"""
+def style_bold_headings(html: str, first_page: bool = False, make_first_red: bool = True) -> str:
+    """Style KEY POINTS heading on first page
+    
+    Args:
+        html: HTML content to style
+        first_page: Whether this is the first page content
+        make_first_red: Whether to make first heading red (Initiating) or black (Update)
+    """
     # NOTE: Previously this function added margin-top: 0.35in to all bold headings
     # This was disabled 2025-01-06 to preserve natural spacing from markdown
-    # Now only styles KEY POINTS on first page to match sidebar headers (red color)
+    # Now only styles KEY POINTS on first page to match sidebar headers (red color for Initiating, black for Update)
     
     # Match <p><strong>TEXT</strong></p> - paragraphs containing only bold text
     pattern = r'<p><strong>(.*?)</strong></p>'
@@ -279,11 +285,11 @@ def style_bold_headings(html: str, first_page: bool = False) -> str:
         start, end = match.span()
         bold_text = match.group(1)
         
-        if first_page and actual_index == 0:
-            # First bold heading on first page (KEY POINTS): red, 13pt, bold (matches sidebar headers)
+        if first_page and actual_index == 0 and make_first_red:
+            # First bold heading on first page for INITIATING reports: red, 13pt, bold (matches sidebar headers)
             styled = f'<p style="color: #ff0000; font-size: 13pt; font-weight: 700;"><strong>{bold_text}</strong></p>'
         else:
-            # All other bold headings: no styling, use natural spacing
+            # All other bold headings (including KEY POINTS in UPDATE reports): no styling, use natural spacing
             # Previous behavior: styled = f'<p style="margin-top: 0.35in;"><strong>{bold_text}</strong></p>'
             styled = f'<p><strong>{bold_text}</strong></p>'
         
@@ -405,7 +411,7 @@ def format_table_date(date_str: str) -> str:
     return date_str
 
 
-def load_markdown_with_front_matter(md_path: Path, project_root: Path, max_height_inches: float = 9.5) -> Tuple[Dict[str, Any], str, str, str, bool]:
+def load_markdown_with_front_matter(md_path: Path, project_root: Path, max_height_inches: float = 9.5, report_type: str = 'Initiating', symbol_logo_url: str = None) -> Tuple[Dict[str, Any], str, str, str, bool]:
     post = frontmatter.load(md_path)
     meta = dict(post.metadata or {})
     
@@ -424,11 +430,24 @@ def load_markdown_with_front_matter(md_path: Path, project_root: Path, max_heigh
     rest_html = md_to_html(rest_md)
     
     # Apply styling: Exhibit/Source lines and bold headings
+    # For Initiating reports: first bold heading is red
+    # For Update reports: all bold headings are black
+    make_first_red = (report_type == 'Initiating')
+    
     first_html = style_exhibit_source_lines(first_html)
-    first_html = style_bold_headings(first_html, first_page=True)
+    first_html = style_bold_headings(first_html, first_page=True, make_first_red=make_first_red)
     
     rest_html = style_exhibit_source_lines(rest_html)
-    rest_html = style_bold_headings(rest_html, first_page=False)
+    rest_html = style_bold_headings(rest_html, first_page=False, make_first_red=make_first_red)
+    
+    # Append symbol logo to end of markdown content (inside the column flow)
+    if symbol_logo_url:
+        logo_html = f'''
+<div style="clear: both; text-align: right; margin-top: -0.1in; page-break-after: always;">
+  <img src="{symbol_logo_url}" alt="Company Logo" style="width: 0.3in; height: auto; object-fit: contain;" />
+</div>
+'''
+        rest_html += logo_html
     
     # Process appendix if present
     appendix_html = ""
@@ -461,7 +480,10 @@ def render_pdf(
     if not md_path.exists():
         raise FileNotFoundError(f"Markdown file not found: {md_path}")
 
-    meta, first_html, rest_html, appendix_html, has_appendix = load_markdown_with_front_matter(md_path, project_root, max_height_inches)
+    # Get symbol logo URL early so we can embed it in markdown
+    symbol_logo_url = (project_root / 'assets' / 'Base' / 'symbol_logo.png').as_uri()
+
+    meta, first_html, rest_html, appendix_html, has_appendix = load_markdown_with_front_matter(md_path, project_root, max_height_inches, report_type, symbol_logo_url)
 
     # Load disclaimer markdown
     disclaimer_path = project_root / 'assets' / 'Base' / 'disclaimer.md'

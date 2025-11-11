@@ -278,6 +278,7 @@
 .md-cont {
   column-count: 2;
   column-gap: 0.3in;
+  column-fill: auto;  /* Fill column 1 first, then column 2 (instead of balancing) */
   margin: 0;
   padding: 0;
 }
@@ -297,21 +298,7 @@
   margin: 0;
 }
 
-/* Symbol logo at end of markdown content (stays on same page as markdown) */
-.continuation-logo {
-  clear: both;  /* Clear the column layout */
-  column-span: all;  /* Span across all columns */
-  text-align: right;  /* Align to right */
-  padding-right: 0.15in;   /* Space from right edge */
-  margin-top: -1.1in;  /* Cancel last paragraph's margin-bottom for tight spacing */
-  page-break-after: always;  /* Force disclaimer to next page */
-}
-.symbol-logo-img {
-  width: 0.3in;  /* 50% smaller (was 0.85in) */
-  height: auto;
-  object-fit: contain;
-  display: inline-block;
-}
+/* Symbol logo is now embedded inline in markdown HTML (no separate div needed) */
 
 /* Update reports: Title is in containers, not in markdown */
 /* First markdown section also needs two columns */

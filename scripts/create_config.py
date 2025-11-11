@@ -431,6 +431,10 @@ def save_config(config: Dict[str, Any], config_path: Path, backup: bool = True):
         shutil.copy2(config_path, backup_path)
         print_info(f"Backed up existing config to {backup_path.name}")
     
+    # Debug: Show what we're about to write
+    if HAS_RICH:
+        console.print(f"\n[dim]Writing {len(config)} fields to {config_path.name}...[/dim]")
+    
     # Save new config
     with open(config_path, 'w', encoding='utf-8') as f:
         # Write header comment
@@ -443,7 +447,12 @@ def save_config(config: Dict[str, Any], config_path: Path, backup: bool = True):
         
         yaml.dump(config, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
     
-    print_success(f"Saved: {config_path}")
+    # Verify file was written
+    if config_path.exists():
+        file_size = config_path.stat().st_size
+        print_success(f"Saved: {config_path} ({file_size} bytes)")
+    else:
+        print_error(f"ERROR: File was not written to {config_path}")
 
 
 # ============================================================================
@@ -519,6 +528,141 @@ def create_updates_config(ticker: str, existing_config: Dict[str, Any] = None) -
 # Main Function
 # ============================================================================
 
+def edit_single_field(config: Dict[str, Any], report_type: str) -> Dict[str, Any]:
+    """Allow user to edit a single field in the config"""
+    if report_type == 'Initiating':
+        # Build flat field list for main fields
+        main_fields = list(INITIATION_FIELDS.keys())
+        company_fields = [f"company_data.{k}" for k in COMPANY_FIELDS.keys()]
+        trade_fields = [f"trade_data.{k}" for k in TRADE_FIELDS.keys()]
+        all_fields = main_fields + company_fields + trade_fields
+    else:
+        all_fields = list(UPDATES_FIELDS.keys())
+    
+    # Display field menu
+    if HAS_RICH:
+        console.print("\n[bold cyan]Select field to edit:[/bold cyan]")
+        for i, field in enumerate(all_fields, 1):
+            # Get current value
+            if '.' in field:
+                section, key = field.split('.', 1)
+                current = config.get(section, {}).get(key, '')
+            else:
+                current = config.get(field, '')
+            
+            console.print(f"  [cyan]{i}[/cyan]. {field} = [yellow]{current}[/yellow]")
+        console.print(f"  [cyan]0[/cyan]. Cancel (go back to preview)")
+    else:
+        print("\nSelect field to edit:")
+        for i, field in enumerate(all_fields, 1):
+            if '.' in field:
+                section, key = field.split('.', 1)
+                current = config.get(section, {}).get(key, '')
+            else:
+                current = config.get(field, '')
+            print(f"  {i}. {field} = {current}")
+        print(f"  0. Cancel (go back to preview)")
+    
+    # Get selection
+    while True:
+        if HAS_RICH:
+            selection = Prompt.ask("\nField number", default="0")
+        else:
+            selection = input("\nField number [0]: ").strip() or "0"
+        
+        try:
+            field_num = int(selection)
+            if field_num == 0:
+                return config
+            if 1 <= field_num <= len(all_fields):
+                break
+            print_error(f"Please enter a number between 0 and {len(all_fields)}")
+        except ValueError:
+            print_error("Please enter a valid number")
+    
+    # Edit the selected field
+    field_name = all_fields[field_num - 1]
+    
+    if report_type == 'Initiating':
+        if '.' in field_name:
+            # Nested field (company_data or trade_data)
+            section, key = field_name.split('.', 1)
+            current_val = config.get(section, {}).get(key)
+            
+            if section == 'company_data':
+                field_info = COMPANY_FIELDS[key]
+            else:
+                field_info = TRADE_FIELDS[key]
+            
+            print_section(f"Editing {field_name}")
+            new_value = prompt_field(key, {'prompt': key, 'required': False, 'example': field_info['example']}, current_val)
+            
+            if section not in config:
+                config[section] = {}
+            if new_value:
+                config[section][key] = new_value
+            else:
+                config[section].pop(key, None)
+        else:
+            # Top-level field
+            field_def = INITIATION_FIELDS[field_name]
+            current_val = config.get(field_name)
+            print_section(f"Editing {field_name}")
+            new_value = prompt_field(field_name, field_def, current_val)
+            # Always update for required fields, only skip if empty and optional
+            if new_value or not field_def.get('required', True):
+                config[field_name] = new_value
+                
+                # Show confirmation of change
+                if new_value != str(current_val):
+                    print_success(f"Updated {field_name}: '{current_val}' → '{new_value}'")
+                else:
+                    print_info(f"Kept {field_name}: '{current_val}'")
+    else:
+        # Update report field
+        field_def = UPDATES_FIELDS[field_name]
+        current_val = config.get(field_name)
+        print_section(f"Editing {field_name}")
+        new_value = prompt_field(field_name, field_def, current_val)
+        # Always update - new_value could be "0", "", or any value
+        # prompt_field handles validation and returns appropriate value
+        config[field_name] = new_value
+        
+        # Show confirmation of change
+        if new_value != str(current_val):
+            print_success(f"Updated {field_name}: '{current_val}' → '{new_value}'")
+        else:
+            print_info(f"Kept {field_name}: '{current_val}'")
+    
+    return config
+
+
+def review_and_edit_loop(config: Dict[str, Any], report_type: str) -> Dict[str, Any]:
+    """Review loop: show preview, ask if correct, allow edits, repeat"""
+    while True:
+        # Show preview
+        display_yaml_preview(config)
+        
+        # Ask if all correct
+        if HAS_RICH:
+            all_correct = Confirm.ask("\n[bold green]Is this configuration correct?[/bold green]", default=True)
+        else:
+            response = input("\nIs this configuration correct? (y/n) [y]: ").strip().lower()
+            all_correct = response in ('', 'y', 'yes')
+        
+        if all_correct:
+            return config
+        
+        # User wants to edit - allow editing one field at a time
+        updated_config = edit_single_field(config, report_type)
+        
+        # Update the config reference
+        config = updated_config
+        
+        if HAS_RICH:
+            console.print("\n[dim]Config updated. Showing new preview...[/dim]\n")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='Interactive configuration creator for ticker reports',
@@ -582,22 +726,15 @@ Examples:
     else:
         config = create_updates_config(ticker, existing_config)
     
-    # Show preview
-    display_yaml_preview(config)
+    # Review and edit loop - show preview, ask if correct, allow edits
+    config = review_and_edit_loop(config, report_type)
     
-    # Confirm save
-    if HAS_RICH:
-        save_confirm = Confirm.ask("\nSave this configuration?", default=True)
-    else:
-        response = input("\nSave this configuration? (y/n) [y]: ").strip().lower()
-        save_confirm = response in ('', 'y', 'yes')
+    # User confirmed config is correct - save it
+    save_config(config, config_file, backup=edit_mode)
+    print_success(f"\n{report_type} config for {ticker} saved successfully!")
     
-    if save_confirm:
-        save_config(config, config_file, backup=edit_mode)
-        print_success(f"\n{report_type} config for {ticker} saved successfully!")
-    else:
-        print_info("Configuration not saved")
-        sys.exit(0)
+    # Show final location
+    print_info(f"Saved to: {config_file}")
 
 
 if __name__ == '__main__':

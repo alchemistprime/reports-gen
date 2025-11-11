@@ -109,14 +109,8 @@
   <!-- Continuation: two columns -->
   <section class="continuation">
     <div class="md md-cont">{{ md_cont_html | safe }}</div>
+    <!-- Symbol logo is now embedded in md_cont_html -->
   </section>
-
-  <!-- Symbol logo on last continuation page (positioned above footer) -->
-  {% if symbol_logo %}
-  <div class="continuation-logo">
-    <img src="{{ symbol_logo }}" alt="Company Logo" class="symbol-logo-img" />
-  </div>
-  {% endif %}
 
   <!-- Appendix section (optional, full-width) -->
   {% if has_appendix %}

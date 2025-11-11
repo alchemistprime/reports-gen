@@ -74,7 +74,7 @@
       <div class="update-info-right">
         <!-- Left column: Company info -->
         <div class="update-info-left-col">
-          <div class="company-name">{{ stock }}</div>
+          <div class="company-name">{{ stock }} ({{ ticker }})</div>
           <div class="publish-info">Published {{ initiation_publish_date }}</div>
           <a href="{{ initiation_report_link }}" class="init-report-link">SEE INITIATING REPORT</a>
         </div>
@@ -105,14 +105,8 @@
     <div class="update-content">
       <div class="md md-first">{{ md_first_html | safe }}</div>
       <div class="md md-cont">{{ md_cont_html | safe }}</div>
+      <!-- Symbol logo is now embedded in md_cont_html -->
     </div>
-    
-    <!-- Symbol logo at end of markdown content (same page) -->
-    {% if symbol_logo %}
-    <div class="continuation-logo">
-      <img src="{{ symbol_logo }}" alt="Company Logo" class="symbol-logo-img" />
-    </div>
-    {% endif %}
   </section>
 
   <!-- Appendix section (optional, full-width) -->
