@@ -215,6 +215,7 @@ table.kv.theme td.theme-val {
 .md-cont {
   column-count: 2;
   column-gap: 0.3in;
+  column-fill: auto;  /* Fill column 1 first, then column 2 (instead of balancing) */
   margin: 0;
   padding: 0;
 }
@@ -222,7 +223,13 @@ table.kv.theme td.theme-val {
 /* Force each paragraph/heading to respect page margins */
 .md-cont > * {
   margin-block-start: 0.12in;
+}
+
+/* Only prevent headings and images from breaking, allow paragraphs to flow */
+.md-cont > h1, .md-cont > h2, .md-cont > h3,
+.md-cont > h4, .md-cont > h5, .md-cont > h6 {
   page-break-inside: avoid;
+  page-break-after: avoid;
 }
 
 .md-cont > *:first-child {

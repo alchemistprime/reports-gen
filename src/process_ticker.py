@@ -76,7 +76,9 @@ def run_command(cmd: list[str], description: str) -> bool:
 @click.option('--max-height', type=float, default=9.5,
               help='Maximum height in inches for first page content (default: 9.5)')
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose output')
-def main(ticker: str, report_type: str, skip_conversion: bool, skip_pdf: bool, max_height: float, verbose: bool):
+@click.option('--nonbranded', is_flag=True, default=False,
+              help='Generate non-branded version (no logos, minimal headers/footers)')
+def main(ticker: str, report_type: str, skip_conversion: bool, skip_pdf: bool, max_height: float, verbose: bool, nonbranded: bool):
     """
     Process a ticker through the full pipeline: DOCX → Markdown → PDF
     
@@ -153,6 +155,9 @@ def main(ticker: str, report_type: str, skip_conversion: bool, skip_pdf: bool, m
             '--report-type', report_type,
             '--max-height', str(max_height)
         ]
+        
+        if nonbranded:
+            cmd.append('--nonbranded')
         
         if not run_command(cmd, f"Generating PDF report for {ticker}"):
             sys.exit(1)

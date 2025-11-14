@@ -181,22 +181,22 @@ UPDATES_FIELDS = {
         'prompt': 'Price at Publication',
         'required': True,
         'type': 'price',
-        'example': '52.30',
-        'description': 'Stock price when initiation was published'
+        'example': '$52.30',
+        'description': 'Stock price when initiation was published (include $ symbol)'
     },
     'recent_price': {
         'prompt': 'Recent Price',
         'required': True,
         'type': 'price',
-        'example': '58.45',
-        'description': 'Current stock price'
+        'example': '$58.45',
+        'description': 'Current stock price (include $ symbol)'
     },
     'target_price': {
         'prompt': 'Target Price',
         'required': True,
         'type': 'price',
-        'example': '65.00',
-        'description': 'Price target'
+        'example': '$65.00',
+        'description': 'Price target (include $ symbol)'
     }
 }
 
@@ -368,15 +368,14 @@ def prompt_field(field_name: str, field_def: dict, current_value: Any = None,
                 print_error("Invalid ticker format. Use uppercase letters with optional :XX")
         elif field_type == 'percentage':
             if validate_percentage(value):
-                # Ensure it has % sign
-                value = value.strip().rstrip('%') + '%'
-                return value
+                # Keep the value as entered (including % sign if provided)
+                return value.strip()
             else:
                 print_error("Invalid percentage format")
         elif field_type == 'price':
             if validate_price(value):
-                # Remove $ and commas, keep just the number
-                return value.strip().lstrip('$').replace(',', '')
+                # Keep the value as entered (including $ and commas)
+                return value.strip()
             else:
                 print_error("Invalid price format")
         elif field_type == 'url':

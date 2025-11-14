@@ -126,9 +126,9 @@ initiation_publish_date: "MM.DD.YYYY"
 initiation_report_link: "https://bindlepaper.com/reports/${TICKER}.Issue00.MMDDYYYY.pdf"
 
 # Pricing data
-price_at_publication: "0.00"
-recent_price: "0.00"
-target_price: "0.00"
+price_at_publication: "\$0.00"
+recent_price: "\$0.00"
+target_price: "\$0.00"
 EOF
 
 echo "✅ Created: ${TICKER}_updateconfig.yaml (Update)"

@@ -96,9 +96,12 @@ def convert_docx_to_markdown(docx_path: str, ticker: str = None, output_dir: str
         # Move images from media/ subdirectory to the images/ directory
         move_images_from_media_dir(images_dir)
         
-        # Write the markdown file
+        # Write the markdown file (temporary, will be updated if unsupported images found)
         with open(markdown_path, 'w', encoding='utf-8') as f:
             f.write(markdown_content)
+        
+        # Remove unsupported image formats (EMF, WMF) and their references from markdown
+        remove_unsupported_images(images_dir, markdown_path)
         
         print(f"✅ Successfully converted {docx_path.name} to {markdown_path.name}")
         print(f"📁 Images extracted to: {images_dir.absolute()}")
@@ -322,6 +325,33 @@ def move_images_from_media_dir(images_dir: Path):
                 print(f"🗑️  Removed media directory (forced)")
             except Exception as cleanup_error:
                 print(f"⚠️  Could not remove media directory: {cleanup_error}")
+
+
+def remove_unsupported_images(images_dir: Path, markdown_file: Path):
+    """
+    Remove unsupported image formats (EMF, WMF) that PIL/WeasyPrint cannot handle.
+    Also removes references to these images from the markdown file.
+    """
+    unsupported_extensions = ['.emf', '.wmf']
+    removed_images = []
+    
+    if images_dir.exists():
+        for image_file in images_dir.iterdir():
+            if image_file.suffix.lower() in unsupported_extensions:
+                print(f"⚠️  Removing unsupported image format: {image_file.name}")
+                removed_images.append(image_file.name)
+                image_file.unlink()
+    
+    # Remove references from markdown
+    if removed_images and markdown_file.exists():
+        content = markdown_file.read_text(encoding='utf-8')
+        for img_name in removed_images:
+            # Remove markdown image references like ![...](images/imageX.emf)
+            import re
+            pattern = rf'!\[([^\]]*)\]\(images/{re.escape(img_name)}\)'
+            content = re.sub(pattern, '', content)
+        markdown_file.write_text(content, encoding='utf-8')
+        print(f"🗑️  Removed {len(removed_images)} unsupported image reference(s) from markdown")
 
 
 @click.command()

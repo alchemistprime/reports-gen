@@ -19,6 +19,36 @@
     }
     html, body { font-family: 'SourceSans3', Helvetica, Arial, sans-serif; }
   </style>
+  {% if nonbranded %}
+  <style>
+    /* NonBranded: Override @page to remove logos and footers */
+    @page {
+      margin-top: 1.05in;  /* Space for issue box */
+      @top-left { content: none; }  /* No logo */
+      @bottom-left { content: none; }  /* No footer */
+      @bottom-right { content: none; }  /* No footer */
+    }
+    @page :first {
+      margin-top: 1.05in;
+      @top-left { content: none; }
+    }
+    @page disclaimerpage {
+      margin-top: 1.05in;
+      @top-left { content: none; }
+      @bottom-left { content: none; }
+      @bottom-right { content: none; }
+    }
+    /* Make issue box flush with top edge */
+    .header-running {
+      margin-top: 0 !important;
+      padding-top: 0 !important;
+    }
+    .issue-box {
+      margin-top: 0 !important;
+      padding-top: 0 !important;
+    }
+  </style>
+  {% endif %}
 </head>
 <body>
 
@@ -35,6 +65,7 @@
     </div>
   </div>
 
+  {% if not nonbranded %}
   <!-- Running logo element for page 1 and disclaimer -->
   <div class="logo-running-first">
     <img class="logo-first" src="{{ logo_img }}" alt="Bindle" />
@@ -60,6 +91,7 @@
       This document and the information contained herein are the exclusive property of The Bindle Paper and are for educational and informational purposes only. This material does not constitute, and should not be construed as, an offer to sell, or a solicitation of an offer to buy, any securities or related financial instruments. This document contains information and views as of the date indicated and such information and views are subject to change without notice. The Bindle Paper has no duty or obligation to update the information contained herein. Please review the full Disclaimer at the end of this document.
     </div>
   </div>
+  {% endif %}
 
   <!-- First page: 60/40 layout -->
   <section class="first-page">
@@ -123,6 +155,7 @@
     {% endfor %}
   {% endif %}
 
+  {% if not nonbranded %}
   <!-- Disclaimer page -->
   <section class="disclaimer-page">
     <h1 class="disclaimer-title">DISCLAIMER</h1>
@@ -147,6 +180,7 @@
       <div class="back-footer-email">INFO@BINDLEPAPER.COM</div>
     </div>
   </section>
+  {% endif %}
 
 </body>
 </html>

@@ -500,6 +500,7 @@ def render_pdf(
     output_file: str = None,
     max_height_inches: float = 9.5,
     report_type: str = 'Initiating',  # 'Initiating' or 'Update'
+    nonbranded: bool = False,
 ) -> str:
     project_root = Path(__file__).parent.parent  # Go up from src/ to project root
     templates_dir = Path(__file__).parent / 'templates'  # Templates are in src/templates/
@@ -516,8 +517,8 @@ def render_pdf(
     if not md_path.exists():
         raise FileNotFoundError(f"Markdown file not found: {md_path}")
 
-    # Get symbol logo URL early so we can embed it in markdown
-    symbol_logo_url = (project_root / 'assets' / 'Base' / 'symbol_logo.png').as_uri()
+    # Get symbol logo URL only if not non-branded
+    symbol_logo_url = None if nonbranded else (project_root / 'assets' / 'Base' / 'symbol_logo.png').as_uri()
 
     meta, first_html, rest_html, appendix_htmls, has_appendix = load_markdown_with_front_matter(md_path, project_root, max_height_inches, report_type, symbol_logo_url)
 
@@ -592,6 +593,7 @@ def render_pdf(
         appendix_htmls=appendix_htmls,
         has_appendix=has_appendix,
         disclaimer_html=disclaimer_html,
+        nonbranded=nonbranded,
         **data
     )
     
@@ -611,6 +613,10 @@ def render_pdf(
             # Format date by removing periods (e.g., "02.20.2025" → "02202025")
             date_str = data.get('date', 'MMDDYYYY').replace('.', '')
             filename = f"{ticker_symbol}.{issue_str}.{date_str}.pdf"
+        
+        # Add -NB suffix if nonbranded
+        if nonbranded:
+            filename = filename.replace('.pdf', '-NB.pdf')
         
         output_path = ticker_dir / filename  # Save to report type folder
     else:
@@ -641,6 +647,8 @@ if __name__ == '__main__':
                         help='Output PDF path (defaults to Tickers/{ticker}/{report_type}/{ticker}_report.pdf)')
     parser.add_argument('--max-height', type=float, default=9.5,
                         help='Maximum height in inches for first page content (default: 9.5)')
+    parser.add_argument('--nonbranded', action='store_true', default=False,
+                        help='Generate non-branded version (no logos, minimal headers/footers)')
     
     args = parser.parse_args()
     
@@ -649,6 +657,7 @@ if __name__ == '__main__':
         markdown_file=args.markdown, 
         output_file=args.output, 
         max_height_inches=args.max_height,
-        report_type=args.report_type
+        report_type=args.report_type,
+        nonbranded=args.nonbranded
     )
 

@@ -13,14 +13,14 @@ downside: 41%
 company_data:
   SECTOR: Technology
   LOCATION: United States
-  MARKET CAP: $27.B
+  MARKET CAP: $27.2B
   EV/EBITDA: 22.7x
-  TRAILING P/E: 30.3x
-  PROFIT MARGIN: '%0.0'
-  TOTAL CASH/DEBT: N/A
+  P/E: 30.3x
+  PROFIT MARGIN: N/A
+  TOTAL CASH/DEBT: $0.3B / $1.1B
   52 WEEK RANGE: $388.46 - $615.00
 trade_data:
   DAILY VOLUME: US $155M
   DAYS TO COVER: '1.1'
-  SHARES SHORT: 0.69%
+  SHARES SHORT: 0.69%.=
   BORROW COST: 0.3%
