@@ -1,0 +1,26 @@
+# Ticker Configuration
+# This file contains ticker-specific metadata for report generation
+
+ticker: HRI
+issue_number: '23'
+date: 07.21.2023
+table_date: 07.20.2023
+theme: DOWNCYCLE
+target: HRI:US
+timeframe: 6-9 MONTHS
+current_target: 142.32 | 85.00
+downside: 40%
+company_data:
+  SECTOR: Industrials
+  LOCATION: United States
+  MARKET CAP: $4.1B
+  EV/EBITDA: 6.4x
+  P/E: 12.8x
+  PROFIT MARGIN: 11.6%
+  TOTAL CASH/DEBT: $40M / $4B
+  52 WEEK RANGE: $93.97 - $162.47
+trade_data:
+  DAILY VOLUME: $55M
+  DAYS TO COVER: 1.9
+  SHARES SHORT: 2.5%
+  BORROW COST: 0.4%

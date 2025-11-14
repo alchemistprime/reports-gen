@@ -109,13 +109,15 @@
     </div>
   </section>
 
-  <!-- Appendix section (optional, full-width) -->
+  <!-- Appendix sections (optional, full-width, each on separate page) -->
   {% if has_appendix %}
+    {% for appendix_html in appendix_htmls %}
   <section class="appendix-page">
     <div class="appendix-content">
       {{ appendix_html | safe }}
     </div>
   </section>
+    {% endfor %}
   {% endif %}
 
   <!-- Disclaimer page -->

@@ -82,6 +82,9 @@ def convert_docx_to_markdown(docx_path: str, ticker: str = None, output_dir: str
         # Convert pandoc superscript syntax ^text^ to HTML <sup>text</sup>
         markdown_content = convert_superscripts(markdown_content)
         
+        # Unescape HTML comments (e.g., <!-- APPENDIX -->) that pandoc escaped
+        markdown_content = unescape_html_comments(markdown_content)
+        
         # Bold all-caps headings that pandoc didn't mark as bold
         markdown_content = bold_all_caps_headings(markdown_content)
         
@@ -156,6 +159,26 @@ def convert_superscripts(markdown_content: str) -> str:
     # Match ^ followed by 1-3 characters followed by ^
     # This handles common cases like ^th^, ^st^, ^nd^, ^rd^, etc.
     return re.sub(r'\^([^\^]{1,3})\^', r'<sup>\1</sup>', markdown_content)
+
+
+def unescape_html_comments(markdown_content: str) -> str:
+    """
+    Unescape HTML comments that pandoc escaped during conversion.
+    
+    Pandoc escapes HTML comments like <!-- APPENDIX --> to \<!\-- APPENDIX \--\>
+    This function reverts them back to proper HTML comment syntax so they can
+    be used as markers in the markdown processing pipeline.
+    
+    Args:
+        markdown_content: Markdown text with escaped HTML comments
+    
+    Returns:
+        Markdown with proper HTML comment syntax
+    """
+    # Pattern matches: \<!\-- (any content) \--\>
+    # Note: The ! is not escaped in pandoc's output
+    # Replace with: <!-- content -->
+    return re.sub(r'\\<!\\--\s*(.*?)\s*\\--\\>', r'<!-- \1 -->', markdown_content)
 
 
 def bold_all_caps_headings(markdown_content: str) -> str:

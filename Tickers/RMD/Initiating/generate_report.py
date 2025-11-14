@@ -86,17 +86,11 @@ def parse_markdown_blocks(content: str) -> List[str]:
     return blocks
 
 
-def measure_content_height(html_content: str, project_root: Path, column_width: float = 4.85) -> float:
-    """Render HTML content and return its height in inches
-    
-    Args:
-        html_content: HTML to measure
-        project_root: Project root path for assets
-        column_width: Width of column in inches (4.85 for Initiating, 3.81 for Update)
-    """
+def measure_content_height(html_content: str, project_root: Path) -> float:
+    """Render HTML content and return its height in inches"""
     templates_dir = project_root / 'templates'
     
-    # Create minimal test HTML that mimics the actual column width
+    # Create minimal test HTML that mimics the .fp-left column
     test_html = f'''
     <!DOCTYPE html>
     <html>
@@ -119,10 +113,9 @@ def measure_content_height(html_content: str, project_root: Path, column_width: 
           padding: 0;
         }}
         .test-container {{
-          /* Column width varies by report type:
-             Initiating: 4.85in (page - margins - sidebar - gap)
-             Update: 3.81in (two-column layout) */
-          width: {column_width}in;
+          /* Mimic .fp-left width in grid: 1fr with sidebar taking 2.85in */
+          /* Page width 8.5in - margins 0.15in+0.23in - sidebar 2.85in - gap 0.25in = ~4.85in */
+          width: 4.85in;
           padding: 0 0 0 0.1in;
           box-sizing: border-box;
         }}
@@ -146,12 +139,6 @@ def measure_content_height(html_content: str, project_root: Path, column_width: 
           break-after: avoid; 
           break-inside: avoid; 
           margin-top: 0.15in; 
-        }}
-        .md a {{
-          color: #ff0000;
-          text-decoration: underline;
-          word-wrap: break-word;
-          overflow-wrap: break-word;
         }}
         .md img {{ max-width: 100%; height: auto; }}
       </style>
@@ -202,19 +189,11 @@ def measure_content_height(html_content: str, project_root: Path, column_width: 
 def split_markdown_by_height(
     content: str,
     max_height_inches: float,
-    project_root: Path,
-    column_width: float = 4.85
+    project_root: Path
 ) -> Tuple[str, str]:
-    """Split markdown based on rendered height using incremental approach
+    """Split markdown based on rendered height using incremental approach"""
     
-    Args:
-        content: Markdown content to split
-        max_height_inches: Maximum height for first section
-        project_root: Project root path
-        column_width: Width of column in inches (4.85 for Initiating, 3.81 for Update)
-    """
-    
-    print(f"🔍 Splitting markdown by height (max: {max_height_inches}in, column: {column_width}in)...")
+    print(f"🔍 Splitting markdown by height (max: {max_height_inches}in)...")
     
     blocks = parse_markdown_blocks(content)
     print(f"   Parsed {len(blocks)} markdown blocks")
@@ -228,7 +207,7 @@ def split_markdown_by_height(
         
         # Measure height
         try:
-            height = measure_content_height(test_html, project_root, column_width)
+            height = measure_content_height(test_html, project_root)
             block_preview = block[:50].replace('\n', ' ') + ('...' if len(block) > 50 else '')
             print(f"   Block {i+1}/{len(blocks)}: cumulative height = {height:.2f}in | '{block_preview}'")
             
@@ -387,31 +366,31 @@ def load_update_config(ticker_dir: Path, ticker: str) -> Dict[str, Any]:
         return {}
 
 
-def extract_appendix(markdown_content: str) -> Tuple[str, List[str], bool]:
+def extract_appendix(markdown_content: str) -> Tuple[str, str, bool]:
     """
-    Extract appendix content from markdown based on simple markers.
+    Extract appendix content from markdown based on a simple marker.
     
-    Each <!-- APPENDIX --> marker starts a new appendix section.
-    If no markers found, there is no appendix.
+    If <!-- APPENDIX --> is found, everything after it becomes the appendix.
+    If not found, there is no appendix.
     
     Returns:
-        (main_content, list_of_appendix_contents, has_appendix)
+        (main_content, appendix_content, has_appendix)
     """
-    # Look for <!-- APPENDIX --> markers (case-insensitive)
+    # Look for <!-- APPENDIX --> marker (case-insensitive)
     appendix_marker = r'<!--\s*APPENDIX\s*-->'
     
-    # Split on ALL markers (not just first one)
-    parts = re.split(appendix_marker, markdown_content, flags=re.IGNORECASE)
+    # Split on the marker
+    parts = re.split(appendix_marker, markdown_content, maxsplit=1, flags=re.IGNORECASE)
     
     if len(parts) < 2:
         # No appendix marker found - all content is main content
-        return (markdown_content, [], False)
+        return (markdown_content, "", False)
     
-    # Split found - first part is main content, rest are appendices
+    # Split found - first part is main content, second part is appendix
     main_content = parts[0].strip()
-    appendix_list = [part.strip() for part in parts[1:] if part.strip()]
+    appendix_content = parts[1].strip()
     
-    return (main_content, appendix_list, True)
+    return (main_content, appendix_content, True)
 
 
 def style_appendix_title(html: str) -> str:
@@ -432,31 +411,18 @@ def format_table_date(date_str: str) -> str:
     return date_str
 
 
-def load_markdown_with_front_matter(md_path: Path, project_root: Path, max_height_inches: float = 9.5, report_type: str = 'Initiating', symbol_logo_url: str = None) -> Tuple[Dict[str, Any], str, str, List[str], bool]:
+def load_markdown_with_front_matter(md_path: Path, project_root: Path, max_height_inches: float = 9.5, report_type: str = 'Initiating', symbol_logo_url: str = None) -> Tuple[Dict[str, Any], str, str, str, bool]:
     post = frontmatter.load(md_path)
     meta = dict(post.metadata or {})
     
     # Extract appendix content if present (before height-based splitting)
-    main_content, appendix_list, has_appendix = extract_appendix(post.content)
-    
-    # Determine column width and adjust max height based on report type
-    # Initiating: Single left column with sidebar (4.85in wide, 9.5in tall)
-    # Update: Two-column layout (each 3.81in wide, but 2 columns means ~2x content fits)
-    if report_type == 'Update':
-        column_width = 3.81
-        # For two-column layout, we can fit roughly twice as much "linear" content
-        # Adjust max height to account for content flowing across both columns
-        adjusted_max_height = max_height_inches * 1.85  # ~1.85x to account for gaps/breaks
-    else:
-        column_width = 4.85
-        adjusted_max_height = max_height_inches
+    main_content, appendix_content, has_appendix = extract_appendix(post.content)
     
     # HEIGHT-BASED SPLIT of main content only (not appendix)
     first_md, rest_md = split_markdown_by_height(
         main_content,
-        max_height_inches=adjusted_max_height,
-        project_root=project_root,
-        column_width=column_width
+        max_height_inches=max_height_inches,
+        project_root=project_root
     )
     
     # Convert markdown to HTML
@@ -477,21 +443,19 @@ def load_markdown_with_front_matter(md_path: Path, project_root: Path, max_heigh
     # Append symbol logo to end of markdown content (inside the column flow)
     if symbol_logo_url:
         logo_html = f'''
-<div style="clear: both; text-align: right; margin-top: 0.0in; page-break-after: always;">
-  <img src="{symbol_logo_url}" alt="Company Logo" style="width: 0.2in; height: auto; object-fit: contain;" />
+<div style="clear: both; text-align: right; margin-top: -0.1in; page-break-after: always;">
+  <img src="{symbol_logo_url}" alt="Company Logo" style="width: 0.3in; height: auto; object-fit: contain;" />
 </div>
 '''
         rest_html += logo_html
     
-    # Process multiple appendices if present
-    appendix_htmls = []
-    if has_appendix and appendix_list:
-        for appendix_md in appendix_list:
-            appendix_html = md_to_html(appendix_md)
-            appendix_html = style_appendix_title(appendix_html)
-            appendix_htmls.append(appendix_html)
+    # Process appendix if present
+    appendix_html = ""
+    if has_appendix and appendix_content:
+        appendix_html = md_to_html(appendix_content)
+        appendix_html = style_appendix_title(appendix_html)
     
-    return meta, first_html, rest_html, appendix_htmls, has_appendix
+    return meta, first_html, rest_html, appendix_html, has_appendix
 
 
 def render_pdf(
@@ -519,7 +483,7 @@ def render_pdf(
     # Get symbol logo URL early so we can embed it in markdown
     symbol_logo_url = (project_root / 'assets' / 'Base' / 'symbol_logo.png').as_uri()
 
-    meta, first_html, rest_html, appendix_htmls, has_appendix = load_markdown_with_front_matter(md_path, project_root, max_height_inches, report_type, symbol_logo_url)
+    meta, first_html, rest_html, appendix_html, has_appendix = load_markdown_with_front_matter(md_path, project_root, max_height_inches, report_type, symbol_logo_url)
 
     # Load disclaimer markdown
     disclaimer_path = project_root / 'assets' / 'Base' / 'disclaimer.md'
@@ -589,7 +553,7 @@ def render_pdf(
     html_str = template.render(
         md_first_html=first_html,
         md_cont_html=rest_html,
-        appendix_htmls=appendix_htmls,
+        appendix_html=appendix_html,
         has_appendix=has_appendix,
         disclaimer_html=disclaimer_html,
         **data

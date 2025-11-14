@@ -236,6 +236,21 @@ table.kv.theme td.theme-val {
 
 /* Symbol logo is now embedded inline in markdown HTML (no separate div needed) */
 
+/* Links in markdown content */
+.md a {
+  color: #ff0000;  /* Red, matching sidebar headers */
+  text-decoration: underline;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.md a:visited,
+.md a:hover,
+.md a:active {
+  color: #ff0000;
+}
+
 .md-first > *:first-child {
   font-size: 22pt;        /* Title size for first line of AZEK.md */
   font-weight: 400;       /* Not bold */

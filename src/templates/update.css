@@ -300,11 +300,27 @@
 
 /* Symbol logo is now embedded inline in markdown HTML (no separate div needed) */
 
+/* Links in markdown content */
+.md a {
+  color: #ff0000;  /* Red, matching other links */
+  text-decoration: underline;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.md a:visited,
+.md a:hover,
+.md a:active {
+  color: #ff0000;
+}
+
 /* Update reports: Title is in containers, not in markdown */
 /* First markdown section also needs two columns */
 .md-first {
   column-count: 2;
   column-gap: 0.3in;
+  column-fill: auto;  /* Fill column 1 first, then column 2 (instead of balancing) */
   margin: 0;
   padding: 0;
 }
